@@ -2,6 +2,7 @@ import 'package:shop/cubit/addProduct.dart';
 import 'package:shop/models/product_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:file_picker/file_picker.dart';
 
 class ProductPage extends StatefulWidget {
   const ProductPage({super.key});
@@ -13,6 +14,8 @@ class ProductPage extends StatefulWidget {
 class _ProductPageState extends State<ProductPage> {
   @override
   Widget build(BuildContext context) {
+    double h = (MediaQuery.of(context).size.height),
+        w = (MediaQuery.of(context).size.width);
     return
         // SingleChildScrollView(
         // child:
@@ -83,13 +86,11 @@ class _ProductPageState extends State<ProductPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            product.img,
-            Text(
-              product.name,
-            ),
-            Text(
-              'Description: ' + product.description,
-            ),
+            ListTile(
+              title: Text(product.name),
+              subtitle: Text(product.description),
+              leading: Image.network(product.imageUrl),
+            )
           ],
         ),
       ),

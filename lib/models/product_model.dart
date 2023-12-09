@@ -6,22 +6,22 @@ class Product {
   late String id;
   final String name;
   final String description;
-  final Image img;
+  final String imageUrl;
   Product({
     this.id = '',
     required this.name,
     required this.description,
-    required this.img,
+    required this.imageUrl,
   });
   Map<String, dynamic> toJson() => {
         'id': id,
         'description': description,
         'name': name,
-        'Image': img,
+        'Image': imageUrl,
       };
   static Product fromJson(Map<String, dynamic> json) => Product(
       id: json['id'],
       description: json['description'],
       name: json['name'],
-      img: json['Image']);
+      imageUrl: json['Image']);
 }

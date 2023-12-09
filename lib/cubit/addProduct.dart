@@ -1,4 +1,7 @@
 import 'dart:io';
+import 'dart:math';
+import 'package:file_picker/file_picker.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:shop/models/product_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -10,34 +13,61 @@ class AddProduct extends StatefulWidget {
 }
 
 class _AddProductState extends State<AddProduct> {
-  late Image _image = Image.asset('assets/google_light.png');
-  final picker = ImagePicker();
-  final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _descriptionController = TextEditingController();
-
-  Future<void> _getImage() async {
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-
+  PlatformFile? pickedFile;
+  UploadTask? uploadTask;
+  String ImageDownloadUrl = '';
+  Future _getImage() async {
+    final result = await FilePicker.platform.pickFiles();
+    if (result == null) return;
     setState(() {
-      if (pickedFile != null) {
-        _image = File(pickedFile.path) as Image;
-      }
+      pickedFile = result.files.first;
     });
   }
 
+  Future uploadFile() async {
+    final path = 'files/${pickedFile!.name}';
+    final file = File(pickedFile!.path!);
+    final fileName = pickedFile!.name;
+    final ref = FirebaseStorage.instance.ref().child('images');
+    Reference referenceImageToUpload = ref.child(fileName);
+    // uploadTask = ref.putFile(file);
+    try {
+      uploadTask = referenceImageToUpload.putFile(file);
+      print('36');
+      final snapshot = await uploadTask!.whenComplete(() {});
+      print('38');
+      final urlDownload = await snapshot.ref.getDownloadURL();
+      print('40');
+      ImageDownloadUrl = await referenceImageToUpload.getDownloadURL();
+      print('42');
+    } catch (e) {}
+  }
+
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _descriptionController = TextEditingController();
+
   @override
   Widget build(BuildContext context) {
+    double h = (MediaQuery.of(context).size.height),
+        w = (MediaQuery.of(context).size.width);
     return Scaffold(
       appBar: AppBar(
-        title: Text('Input Page'),
+        title: const Text('Input Page'),
         actions: [
           IconButton(
               onPressed: () {
                 final String name = _nameController.text;
                 final String description = _descriptionController.text;
-                createProduct(des: description, name: name, imagetoadd: _image);
+                uploadFile();
+                if (ImageDownloadUrl.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("No Image Uploaded")));
+                  return;
+                }
+                createProduct(
+                    des: description, name: name, imageUrl: ImageDownloadUrl);
               },
-              icon: Icon(Icons.check))
+              icon: const Icon(Icons.check))
         ],
       ),
       body: Padding(
@@ -47,32 +77,37 @@ class _AddProductState extends State<AddProduct> {
           children: [
             GestureDetector(
                 onTap: _getImage,
-                child: _image == null
+                child: (pickedFile == null)
                     ? Container(
                         width: 100,
                         height: 100,
                         color: Colors.grey,
-                        child: Icon(Icons.camera_alt, color: Colors.white),
+                        child:
+                            const Icon(Icons.camera_alt, color: Colors.white),
                       )
-                    : _image),
-            SizedBox(height: 20),
+                    : Image.file(
+                        File(pickedFile!.path!),
+                        height: h / 3,
+                        width: w / 3,
+                      )),
+            const SizedBox(height: 20),
             TextField(
               controller: _nameController,
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 labelText: 'Name',
                 border: OutlineInputBorder(),
               ),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             TextField(
               controller: _descriptionController,
               maxLines: 3,
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 labelText: 'Description',
                 border: OutlineInputBorder(),
               ),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
                 // Access the entered data
@@ -84,7 +119,7 @@ class _AddProductState extends State<AddProduct> {
                 print('Name: $name');
                 print('Description: $description');
               },
-              child: Text('Submit'),
+              child: const Text('Submit'),
             ),
           ],
         ),
@@ -95,11 +130,11 @@ class _AddProductState extends State<AddProduct> {
   Future createProduct(
       {required String des,
       required String name,
-      required Image imagetoadd}) async {
+      required String imageUrl}) async {
     final docProduct =
         FirebaseFirestore.instance.collection('products').doc('my-id');
     final product = Product(
-        id: docProduct.id, description: des, name: name, img: imagetoadd);
+        id: docProduct.id, description: des, name: name, imageUrl: imageUrl);
     final json = product.toJson();
     await docProduct.set(json);
   }
