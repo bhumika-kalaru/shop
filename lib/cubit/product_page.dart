@@ -14,13 +14,10 @@ class ProductPage extends StatefulWidget {
 class _ProductPageState extends State<ProductPage> {
   @override
   Widget build(BuildContext context) {
-    double h = (MediaQuery.of(context).size.height),
-        w = (MediaQuery.of(context).size.width);
-    return
-        // SingleChildScrollView(
-        // child:
-        Scaffold(
+    return Scaffold(
       appBar: AppBar(
+        backgroundColor: Colors.white,
+        title: Text("Products"),
         centerTitle: true,
         actions: [
           GestureDetector(
@@ -58,7 +55,7 @@ class _ProductPageState extends State<ProductPage> {
                   print('$products');
 
                   return ListView(
-                    children: products.map(buildUser).toList(),
+                    children: products.map(buildProduct).toList(),
                   );
                 } else {
                   return Center(
@@ -73,7 +70,7 @@ class _ProductPageState extends State<ProductPage> {
     );
   }
 
-  Widget buildUser(Product product) => GestureDetector(
+  Widget buildProduct(Product product) => GestureDetector(
       child: Container(
         height: 100,
         padding: EdgeInsets.all(10),
@@ -86,10 +83,17 @@ class _ProductPageState extends State<ProductPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            ListTile(
-              title: Text(product.name),
-              subtitle: Text(product.description),
-              leading: Image.network(product.imageUrl),
+            Text(
+              product.Name,
+              // style: text,
+            ),
+            Text(
+              'Key Details: ' + product.Description,
+              // style: lightText,
+            ),
+            Text(
+              'Contact Details: ' + product.Price,
+              // style: contText,
             )
           ],
         ),

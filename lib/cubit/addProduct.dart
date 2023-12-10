@@ -1,3 +1,4 @@
+import 'dart:ffi';
 import 'dart:io';
 import 'dart:math';
 import 'package:file_picker/file_picker.dart';
@@ -24,51 +25,55 @@ class _AddProductState extends State<AddProduct> {
     });
   }
 
-  Future uploadFile() async {
-    final path = 'files/${pickedFile!.name}';
-    final file = File(pickedFile!.path!);
-    final fileName = pickedFile!.name;
+  Future<String> uploadFile(File file, String fileName) async {
     final ref = FirebaseStorage.instance.ref().child('images');
     Reference referenceImageToUpload = ref.child(fileName);
-    // uploadTask = ref.putFile(file);
+
     try {
-      uploadTask = referenceImageToUpload.putFile(file);
-      print('36');
-      final snapshot = await uploadTask!.whenComplete(() {});
-      print('38');
-      final urlDownload = await snapshot.ref.getDownloadURL();
-      print('40');
-      ImageDownloadUrl = await referenceImageToUpload.getDownloadURL();
-      print('42');
-    } catch (e) {}
+      await referenceImageToUpload.putFile(file);
+      final snapshot = await referenceImageToUpload.getDownloadURL();
+      return snapshot;
+    } catch (e) {
+      print("Error uploading file: $e");
+      return '';
+    }
+  }
+
+  Future<void> createProduct({
+    required String des,
+    required String name,
+    required String price,
+    required String quantity,
+    required String imageUrl,
+  }) async {
+    print("Creating product");
+    final docProduct = FirebaseFirestore.instance.collection('products').doc();
+    final product = Product(
+      Id: docProduct.id,
+      Description: des,
+      Name: name,
+      ImageUrl: imageUrl,
+      Price: price,
+      Quantity: quantity,
+    );
+    final json = product.toJson();
+    await docProduct.set(json);
+    print("Product created");
   }
 
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
+  final TextEditingController _priceController = TextEditingController();
+  final TextEditingController _quantityController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
-    double h = (MediaQuery.of(context).size.height),
-        w = (MediaQuery.of(context).size.width);
+    // double h = (MediaQuery.of(context).size.height),
+    //     w = (MediaQuery.of(context).size.width);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Input Page'),
-        actions: [
-          IconButton(
-              onPressed: () {
-                final String name = _nameController.text;
-                final String description = _descriptionController.text;
-                uploadFile();
-                if (ImageDownloadUrl.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("No Image Uploaded")));
-                  return;
-                }
-                createProduct(
-                    des: description, name: name, imageUrl: ImageDownloadUrl);
-              },
-              icon: const Icon(Icons.check))
-        ],
+        actions: [],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -87,14 +92,30 @@ class _AddProductState extends State<AddProduct> {
                       )
                     : Image.file(
                         File(pickedFile!.path!),
-                        height: h / 3,
-                        width: w / 3,
+                        height: 50,
+                        width: 50,
                       )),
             const SizedBox(height: 20),
             TextField(
               controller: _nameController,
               decoration: const InputDecoration(
                 labelText: 'Name',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            TextField(
+              keyboardType: TextInputType.number,
+              controller: _priceController,
+              decoration: const InputDecoration(
+                labelText: 'Price',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            TextField(
+              keyboardType: TextInputType.number,
+              controller: _quantityController,
+              decoration: const InputDecoration(
+                labelText: 'Quantity',
                 border: OutlineInputBorder(),
               ),
             ),
@@ -109,15 +130,49 @@ class _AddProductState extends State<AddProduct> {
             ),
             const SizedBox(height: 20),
             ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
                 // Access the entered data
                 final String name = _nameController.text;
                 final String description = _descriptionController.text;
+                final String price = _priceController.text;
+                final String quantity = _quantityController.text;
+                try {
+                  // final result = await FilePicker.platform.pickFiles();
+                  // if (result != null) {
+                  // final pickedFile = result.files.first;
+                  final file = File(pickedFile!.path!);
+                  final fileName = pickedFile!.name;
 
-                // Do something with the data (e.g., save it, send it, etc.)
-                // For now, just print it to the console
-                print('Name: $name');
-                print('Description: $description');
+                  // Upload image
+                  final imageUrl = await uploadFile(file, fileName);
+
+                  if (imageUrl.isNotEmpty) {
+                    // Image upload successful, create product
+                    await createProduct(
+                      des: description,
+                      name: name,
+                      imageUrl: imageUrl,
+                      price: price,
+                      quantity: quantity,
+                    );
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                          content: Text("Product created successfully")),
+                    );
+                    Navigator.pop(context);
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("Error uploading image")),
+                    );
+                  }
+                  // }
+                } catch (e) {
+                  print("Error: $e");
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("An error occurred")),
+                  );
+                }
               },
               child: const Text('Submit'),
             ),
@@ -125,17 +180,5 @@ class _AddProductState extends State<AddProduct> {
         ),
       ),
     );
-  }
-
-  Future createProduct(
-      {required String des,
-      required String name,
-      required String imageUrl}) async {
-    final docProduct =
-        FirebaseFirestore.instance.collection('products').doc('my-id');
-    final product = Product(
-        id: docProduct.id, description: des, name: name, imageUrl: imageUrl);
-    final json = product.toJson();
-    await docProduct.set(json);
   }
 }

@@ -46,6 +46,8 @@ dependencies:
   image_picker: ^1.0.4
   file_picker: ^6.1.1
   firebase_storage: ^11.5.5
+  equatable: ^2.0.5
+  sqflite_common: ^2.5.0+2
 
 dev_dependencies:
   flutter_test:
@@ -70,8 +72,8 @@ flutter:
   uses-material-design: true
 
   # To add assets to your application, add an assets section, like this:
-  assets:
-    - assets/
+  # assets:
+    # - assets/
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see

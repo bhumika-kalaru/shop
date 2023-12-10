@@ -3,25 +3,34 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 
 class Product {
-  late String id;
-  final String name;
-  final String description;
-  final String imageUrl;
+  late String Id;
+  final String Price, Quantity;
+  late final String Name;
+  final String Description;
+  final String ImageUrl;
   Product({
-    this.id = '',
-    required this.name,
-    required this.description,
-    required this.imageUrl,
+    this.Id = '',
+    required this.Price,
+    required this.Quantity,
+    required this.Name,
+    required this.Description,
+    required this.ImageUrl,
   });
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'description': description,
-        'name': name,
-        'Image': imageUrl,
+        'id': Id,
+        'description': Description,
+        'name': Name,
+        'image': ImageUrl,
+        'price': Price,
+        'quantity': Quantity,
       };
   static Product fromJson(Map<String, dynamic> json) => Product(
-      id: json['id'],
-      description: json['description'],
-      name: json['name'],
-      imageUrl: json['Image']);
+      Id: json['id'],
+      Description: json['description'],
+      Name: json['name'],
+      ImageUrl: json['image'],
+      Quantity: json['quantity'],
+      Price: json['price']);
+
+  // Map<String, Object?> toMapSql() {}
 }
