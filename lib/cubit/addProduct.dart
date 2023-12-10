@@ -75,108 +75,110 @@ class _AddProductState extends State<AddProduct> {
         title: const Text('Input Page'),
         actions: [],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            GestureDetector(
-                onTap: _getImage,
-                child: (pickedFile == null)
-                    ? Container(
-                        width: 100,
-                        height: 100,
-                        color: Colors.grey,
-                        child:
-                            const Icon(Icons.camera_alt, color: Colors.white),
-                      )
-                    : Image.file(
-                        File(pickedFile!.path!),
-                        height: 50,
-                        width: 50,
-                      )),
-            const SizedBox(height: 20),
-            TextField(
-              controller: _nameController,
-              decoration: const InputDecoration(
-                labelText: 'Name',
-                border: OutlineInputBorder(),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              GestureDetector(
+                  onTap: _getImage,
+                  child: (pickedFile == null)
+                      ? Container(
+                          width: 100,
+                          height: 100,
+                          color: Colors.grey,
+                          child:
+                              const Icon(Icons.camera_alt, color: Colors.white),
+                        )
+                      : Image.file(
+                          File(pickedFile!.path!),
+                          height: 50,
+                          width: 50,
+                        )),
+              const SizedBox(height: 20),
+              TextField(
+                controller: _nameController,
+                decoration: const InputDecoration(
+                  labelText: 'Name',
+                  border: OutlineInputBorder(),
+                ),
               ),
-            ),
-            TextField(
-              keyboardType: TextInputType.number,
-              controller: _priceController,
-              decoration: const InputDecoration(
-                labelText: 'Price',
-                border: OutlineInputBorder(),
+              TextField(
+                keyboardType: TextInputType.number,
+                controller: _priceController,
+                decoration: const InputDecoration(
+                  labelText: 'Price',
+                  border: OutlineInputBorder(),
+                ),
               ),
-            ),
-            TextField(
-              keyboardType: TextInputType.number,
-              controller: _quantityController,
-              decoration: const InputDecoration(
-                labelText: 'Quantity',
-                border: OutlineInputBorder(),
+              TextField(
+                keyboardType: TextInputType.number,
+                controller: _quantityController,
+                decoration: const InputDecoration(
+                  labelText: 'Quantity',
+                  border: OutlineInputBorder(),
+                ),
               ),
-            ),
-            const SizedBox(height: 20),
-            TextField(
-              controller: _descriptionController,
-              maxLines: 3,
-              decoration: const InputDecoration(
-                labelText: 'Description',
-                border: OutlineInputBorder(),
+              const SizedBox(height: 20),
+              TextField(
+                controller: _descriptionController,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: 'Description',
+                  border: OutlineInputBorder(),
+                ),
               ),
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () async {
-                // Access the entered data
-                final String name = _nameController.text;
-                final String description = _descriptionController.text;
-                final String price = _priceController.text;
-                final String quantity = _quantityController.text;
-                try {
-                  // final result = await FilePicker.platform.pickFiles();
-                  // if (result != null) {
-                  // final pickedFile = result.files.first;
-                  final file = File(pickedFile!.path!);
-                  final fileName = pickedFile!.name;
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: () async {
+                  // Access the entered data
+                  final String name = _nameController.text;
+                  final String description = _descriptionController.text;
+                  final String price = _priceController.text;
+                  final String quantity = _quantityController.text;
+                  try {
+                    // final result = await FilePicker.platform.pickFiles();
+                    // if (result != null) {
+                    // final pickedFile = result.files.first;
+                    final file = File(pickedFile!.path!);
+                    final fileName = pickedFile!.name;
 
-                  // Upload image
-                  final imageUrl = await uploadFile(file, fileName);
+                    // Upload image
+                    final imageUrl = await uploadFile(file, fileName);
 
-                  if (imageUrl.isNotEmpty) {
-                    // Image upload successful, create product
-                    await createProduct(
-                      des: description,
-                      name: name,
-                      imageUrl: imageUrl,
-                      price: price,
-                      quantity: quantity,
-                    );
+                    if (imageUrl.isNotEmpty) {
+                      // Image upload successful, create product
+                      await createProduct(
+                        des: description,
+                        name: name,
+                        imageUrl: imageUrl,
+                        price: price,
+                        quantity: quantity,
+                      );
 
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                            content: Text("Product created successfully")),
+                      );
+                      Navigator.pop(context);
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("Error uploading image")),
+                      );
+                    }
+                    // }
+                  } catch (e) {
+                    print("Error: $e");
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                          content: Text("Product created successfully")),
-                    );
-                    Navigator.pop(context);
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("Error uploading image")),
+                      const SnackBar(content: Text("An error occurred")),
                     );
                   }
-                  // }
-                } catch (e) {
-                  print("Error: $e");
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("An error occurred")),
-                  );
-                }
-              },
-              child: const Text('Submit'),
-            ),
-          ],
+                },
+                child: const Text('Submit'),
+              ),
+            ],
+          ),
         ),
       ),
     );

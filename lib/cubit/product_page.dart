@@ -1,3 +1,7 @@
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:shop/Login/logIn.dart';
+import 'package:shop/constants.dart';
 import 'package:shop/cubit/addProduct.dart';
 import 'package:shop/models/product_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -5,16 +9,36 @@ import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 
 class ProductPage extends StatefulWidget {
-  const ProductPage({super.key});
+  const ProductPage({required this.w, required this.h});
+  final double h, w;
 
   @override
   State<ProductPage> createState() => _ProductPageState();
 }
 
 class _ProductPageState extends State<ProductPage> {
+  String? userId = FirebaseAuth.instance.currentUser?.uid;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      drawer: Drawer(
+        child: ListTile(
+          leading: Icon(
+            Icons.logout,
+            color: Colors.red,
+          ),
+          tileColor: white,
+          title: Center(child: Text('Log Out')),
+          onTap: () async {
+            await FirebaseAuth.instance.signOut();
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (context) => LogIn()),
+              (Route<dynamic> route) => false,
+            );
+          },
+        ),
+      ),
       appBar: AppBar(
         backgroundColor: Colors.white,
         title: Text("Products"),
@@ -34,12 +58,6 @@ class _ProductPageState extends State<ProductPage> {
             width: 5,
           )
         ],
-        leading: GestureDetector(
-          onTap: () {
-            Navigator.pop(context);
-          },
-          child: Icon(Icons.arrow_back_ios),
-        ),
       ),
       body: Stack(
         children: [
@@ -72,11 +90,10 @@ class _ProductPageState extends State<ProductPage> {
 
   Widget buildProduct(Product product) => GestureDetector(
       child: Container(
-        height: 100,
         padding: EdgeInsets.all(10),
         decoration: BoxDecoration(
             color: Colors.white,
-            // boxShadow: greenShadow,
+            boxShadow: blueShadow,
             borderRadius: BorderRadius.circular(20)),
         margin: EdgeInsets.all(15),
         child: Column(
@@ -85,16 +102,20 @@ class _ProductPageState extends State<ProductPage> {
           children: [
             Text(
               product.Name,
-              // style: text,
+              style: GoogleFonts.openSans(
+                  color: Colors.black,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 32),
             ),
             Text(
-              'Key Details: ' + product.Description,
+              'Description: ' + product.Description,
               // style: lightText,
             ),
-            Text(
-              'Contact Details: ' + product.Price,
-              // style: contText,
-            )
+            Text('Price: ' + product.Price,
+                style: GoogleFonts.openSans(
+                    color: Colors.red,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16))
           ],
         ),
       ),
