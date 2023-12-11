@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:shop/Login/logIn.dart';
 import 'package:shop/constants.dart';
 import 'package:shop/cubit/addProduct.dart';
+import 'package:shop/cubit/viewProduct.dart';
 import 'package:shop/models/product_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -43,21 +44,21 @@ class _ProductPageState extends State<ProductPage> {
         backgroundColor: Colors.white,
         title: Text("Products"),
         centerTitle: true,
-        actions: [
-          GestureDetector(
-            onTap: () {
-              setState(() {
-                Navigator.push(context,
-                    MaterialPageRoute(builder: (context) => AddProduct()));
-              });
-            },
-            child: Icon(Icons.add),
-          ),
-          SizedBox(width: 15),
-          SizedBox(
-            width: 5,
-          )
-        ],
+        // actions: [
+        //   GestureDetector(
+        //     onTap: () {
+        //       setState(() {
+        //         Navigator.push(context,
+        //             MaterialPageRoute(builder: (context) => AddProduct()));
+        //       });
+        //     },
+        //     child: Icon(Icons.add),
+        //   ),
+        //   SizedBox(width: 15),
+        //   SizedBox(
+        //     width: 5,
+        //   )
+        // ],
       ),
       body: Stack(
         children: [
@@ -72,8 +73,24 @@ class _ProductPageState extends State<ProductPage> {
                   final products = snapshot.data!;
                   print('$products');
 
-                  return ListView(
-                    children: products.map(buildProduct).toList(),
+                  return Center(
+                    child: ListView.builder(
+                      itemCount: (products.length / 2).ceil(),
+                      itemBuilder: (context, index) {
+                        final int firstIndex = index * 2;
+                        final int secondIndex = firstIndex + 1;
+
+                        return Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            if (firstIndex < products.length)
+                              buildProduct(products[firstIndex]),
+                            if (secondIndex < products.length)
+                              buildProduct(products[secondIndex]),
+                          ],
+                        );
+                      },
+                    ),
                   );
                 } else {
                   return Center(
@@ -85,23 +102,42 @@ class _ProductPageState extends State<ProductPage> {
           ),
         ],
       ),
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: Color(0xfff61f7a),
+        onPressed: () {
+          setState(() {
+            Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) =>
+                        AddProduct(h: widget.h, w: widget.w)));
+          });
+        },
+        child: Icon(
+          Icons.add,
+          color: white,
+        ),
+      ),
     );
   }
 
   Widget buildProduct(Product product) => GestureDetector(
       child: Container(
-        padding: EdgeInsets.all(10),
+        width: 3 * widget.w / 7,
+        height: widget.h / 5,
+        padding: EdgeInsets.all(widget.w / 20),
         decoration: BoxDecoration(
             color: Colors.white,
             boxShadow: blueShadow,
-            borderRadius: BorderRadius.circular(20)),
-        margin: EdgeInsets.all(15),
+            borderRadius: BorderRadius.circular(10)),
+        margin: EdgeInsets.all(widget.w / 28),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
             Text(
               product.Name,
+              overflow: TextOverflow.ellipsis,
               style: GoogleFonts.openSans(
                   color: Colors.black,
                   fontWeight: FontWeight.bold,
@@ -109,9 +145,11 @@ class _ProductPageState extends State<ProductPage> {
             ),
             Text(
               'Description: ' + product.Description,
+              overflow: TextOverflow.ellipsis,
               // style: lightText,
             ),
             Text('Price: ' + product.Price,
+                overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.openSans(
                     color: Colors.red,
                     fontWeight: FontWeight.bold,
@@ -119,7 +157,13 @@ class _ProductPageState extends State<ProductPage> {
           ],
         ),
       ),
-      onTap: () {});
+      onTap: () {
+        Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) => ViewProduct(
+                    w: widget.w, h: widget.h, currentProduct: product)));
+      });
   Stream<List<Product>> readproducts() => FirebaseFirestore.instance
       .collection('products')
       .snapshots()

@@ -3,12 +3,15 @@ import 'dart:io';
 import 'dart:math';
 import 'package:file_picker/file_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:shop/constants.dart';
 import 'package:shop/models/product_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 class AddProduct extends StatefulWidget {
+  AddProduct({required this.w, required this.h});
+  final double h, w;
   @override
   _AddProductState createState() => _AddProductState();
 }
@@ -55,6 +58,7 @@ class _AddProductState extends State<AddProduct> {
       ImageUrl: imageUrl,
       Price: price,
       Quantity: quantity,
+      Wishlisted: false,
     );
     final json = product.toJson();
     await docProduct.set(json);
@@ -72,8 +76,9 @@ class _AddProductState extends State<AddProduct> {
     //     w = (MediaQuery.of(context).size.width);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Input Page'),
-        actions: [],
+        backgroundColor: maincolour,
+        title: const Text('Creating Product'),
+        centerTitle: true,
       ),
       body: SingleChildScrollView(
         child: Padding(
@@ -85,97 +90,104 @@ class _AddProductState extends State<AddProduct> {
                   onTap: _getImage,
                   child: (pickedFile == null)
                       ? Container(
-                          width: 100,
-                          height: 100,
+                          width: 6 * widget.w / 7,
+                          height: widget.h / 3,
                           color: Colors.grey,
                           child:
                               const Icon(Icons.camera_alt, color: Colors.white),
                         )
                       : Image.file(
                           File(pickedFile!.path!),
-                          height: 50,
+                          height: widget.h / 3,
                           width: 50,
                         )),
-              const SizedBox(height: 20),
-              TextField(
-                controller: _nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Name',
-                  border: OutlineInputBorder(),
-                ),
+              Column(
+                children: [
+                  TextField(
+                    controller: _nameController,
+                    maxLength: 15,
+                    decoration: const InputDecoration(
+                      labelText: 'Name',
+                    ),
+                  ),
+                  Container(
+                    margin: EdgeInsets.all(5),
+                    child: TextField(
+                      maxLength: 5,
+                      keyboardType: TextInputType.number,
+                      controller: _priceController,
+                      decoration: const InputDecoration(
+                        labelText: 'Price',
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  TextField(
+                    controller: _descriptionController,
+                    maxLines: 3,
+                    maxLength: 300,
+                    decoration: const InputDecoration(
+                      labelText: 'Description',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                ],
               ),
-              TextField(
-                keyboardType: TextInputType.number,
-                controller: _priceController,
-                decoration: const InputDecoration(
-                  labelText: 'Price',
-                  border: OutlineInputBorder(),
-                ),
+              SizedBox(
+                height: 40,
               ),
-              TextField(
-                keyboardType: TextInputType.number,
-                controller: _quantityController,
-                decoration: const InputDecoration(
-                  labelText: 'Quantity',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 20),
-              TextField(
-                controller: _descriptionController,
-                maxLines: 3,
-                decoration: const InputDecoration(
-                  labelText: 'Description',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () async {
-                  // Access the entered data
-                  final String name = _nameController.text;
-                  final String description = _descriptionController.text;
-                  final String price = _priceController.text;
-                  final String quantity = _quantityController.text;
-                  try {
-                    // final result = await FilePicker.platform.pickFiles();
-                    // if (result != null) {
-                    // final pickedFile = result.files.first;
-                    final file = File(pickedFile!.path!);
-                    final fileName = pickedFile!.name;
+              Align(
+                alignment: Alignment.bottomCenter,
+                child: ElevatedButton(
+                  onPressed: () async {
+                    // Access the entered data
+                    final String name = _nameController.text;
+                    final String description = _descriptionController.text;
+                    final String price = _priceController.text;
+                    final String quantity = _quantityController.text;
+                    try {
+                      // final result = await FilePicker.platform.pickFiles();
+                      // if (result != null) {
+                      // final pickedFile = result.files.first;
+                      final file = File(pickedFile!.path!);
+                      final fileName = pickedFile!.name;
 
-                    // Upload image
-                    final imageUrl = await uploadFile(file, fileName);
+                      // Upload image
+                      final imageUrl = await uploadFile(file, fileName);
 
-                    if (imageUrl.isNotEmpty) {
-                      // Image upload successful, create product
-                      await createProduct(
-                        des: description,
-                        name: name,
-                        imageUrl: imageUrl,
-                        price: price,
-                        quantity: quantity,
-                      );
+                      if (imageUrl.isNotEmpty &&
+                          price.isNotEmpty &&
+                          name.isNotEmpty &&
+                          description.isNotEmpty) {
+                        // Image upload successful, create product
+                        await createProduct(
+                          des: description,
+                          name: name,
+                          imageUrl: imageUrl,
+                          price: price,
+                          quantity: quantity,
+                        );
 
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                              content: Text("Product created successfully")),
+                        );
+                        Navigator.pop(context);
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                              content: Text("All the fields are required")),
+                        );
+                      }
+                    } catch (e) {
+                      print("Error: $e");
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                            content: Text("Product created successfully")),
-                      );
-                      Navigator.pop(context);
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("Error uploading image")),
+                        const SnackBar(content: Text("An error occurred")),
                       );
                     }
-                    // }
-                  } catch (e) {
-                    print("Error: $e");
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("An error occurred")),
-                    );
-                  }
-                },
-                child: const Text('Submit'),
+                  },
+                  child: const Text('Submit'),
+                ),
               ),
             ],
           ),
