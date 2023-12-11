@@ -5,10 +5,12 @@ import 'package:shop/constants.dart';
 import 'package:shop/cubit/Cart.dart';
 import 'package:shop/cubit/addProduct.dart';
 import 'package:shop/cubit/viewProduct.dart';
+import 'package:shop/cubit/wishlistPage.dart';
 import 'package:shop/models/product_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:shop/widgets/bottomNavigationbar.dart';
 import 'package:shop/widgets/wishlist.dart';
 
 class ProductPage extends StatefulWidget {
@@ -20,6 +22,7 @@ class ProductPage extends StatefulWidget {
 }
 
 class _ProductPageState extends State<ProductPage> {
+  int _currentIndex = 1;
   String? curUserId = FirebaseAuth.instance.currentUser?.uid;
   Icon heart = Icon(Icons.favorite);
   @override
@@ -141,6 +144,34 @@ class _ProductPageState extends State<ProductPage> {
           color: white,
         ),
       ),
+      bottomNavigationBar: MyBottomWidget(
+          currentIndex: 1,
+          onTabTapped: (index) {
+            setState(() {
+              _currentIndex = index;
+            });
+
+            // Handle navigation based on index
+            if (_currentIndex == 0) {
+              // Navigate to WishlistPage
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => WishlistPage(
+                      h: widget.h,
+                      w: widget.w), // Replace with your WishlistPage
+                ),
+              );
+            } else if (_currentIndex == 2) {
+              // Navigate to CartPage
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => CartPage(h: widget.h, w: widget.w),
+                ),
+              );
+            }
+          }),
     );
   }
 
@@ -209,7 +240,7 @@ class _ProductPageState extends State<ProductPage> {
                               );
                             },
                             icon: HeartIcon(
-                              isWishlisted: product.Wishlisted,
+                              pId: product.Id,
                               c: Colors.red,
                             ),
                           ),
@@ -275,7 +306,7 @@ class _ProductPageState extends State<ProductPage> {
     }
     setState(() {
       heart = HeartIcon(
-        isWishlisted: !p.Wishlisted,
+        pId: p.Id,
         c: Colors.red,
       ) as Icon;
     });

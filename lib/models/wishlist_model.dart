@@ -1,18 +1,15 @@
 import 'package:flutter/material.dart';
 
-class CartProduct {
-  late String Id;
-  final String ProductId;
-  CartProduct({
+class WishlistProduct {
+  final String Id;
+  WishlistProduct({
     required this.Id,
-    required this.ProductId,
   });
   Map<String, dynamic> toJson() => {
-        'id': Id,
-        'productId': ProductId,
+        'Id': Id,
       };
-  static CartProduct fromJson(Map<String, dynamic> json) =>
-      CartProduct(Id: json['id'], ProductId: json['productId']);
+  static WishlistProduct fromJson(Map<String, dynamic> json) =>
+      WishlistProduct(Id: json['Id']);
 
   // Map<String, Object?> toMapSql() {}
 }

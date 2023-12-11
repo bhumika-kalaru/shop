@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -7,6 +9,7 @@ import 'package:shop/cubit/editProduct.dart';
 import 'package:shop/main.dart';
 import 'package:shop/models/cart_model.dart';
 import 'package:shop/models/product_model.dart';
+import 'package:shop/models/wishlist_model.dart';
 import 'package:shop/widgets/wishlist.dart';
 
 class ViewProduct extends StatefulWidget {
@@ -22,6 +25,23 @@ class _ViewProductState extends State<ViewProduct> {
   String? curUserId = FirebaseAuth.instance.currentUser?.uid;
   Icon heart = Icon(Icons.favorite);
 
+  Future<bool> doesProductExistInCart(String productId) async {
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(curUserId)
+          .collection('cart')
+          .doc(productId)
+          .get();
+
+      return snapshot.exists;
+    } catch (e) {
+      // Handle any potential errors (e.g., Firestore query error)
+      print('Error checking product existence: $e');
+      return false;
+    }
+  }
+
   Future<void> createCartProduct({
     required String pId,
   }) async {
@@ -33,12 +53,51 @@ class _ViewProductState extends State<ViewProduct> {
         .collection('users')
         .doc(curUserId)
         .collection('cart')
-        .doc();
+        .doc(pId);
     final product = CartProduct(
-      Id: docProduct.id,
+      Id: pId,
       Quantity: '1',
-      ProductId: pId,
     );
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("38")),
+    );
+    final json = product.toJson();
+    await docProduct.set(json);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("43")),
+    );
+  }
+
+  Future<bool> doesProductExistInWishList(String productId) async {
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(curUserId)
+          .collection('wishlist')
+          .doc(productId)
+          .get();
+
+      return snapshot.exists;
+    } catch (e) {
+      // Handle any potential errors (e.g., Firestore query error)
+      print('Error checking product existence: $e');
+      return false;
+    }
+  }
+
+  Future<void> createWishlistProduct({
+    required String pId,
+  }) async {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("29")),
+    );
+    print("Creating product");
+    final docProduct = FirebaseFirestore.instance
+        .collection('users')
+        .doc(curUserId)
+        .collection('wishlist')
+        .doc(pId);
+    final product = WishlistProduct(Id: pId);
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text("38")),
     );
@@ -77,7 +136,7 @@ class _ViewProductState extends State<ViewProduct> {
     print("72");
     setState(() {
       heart = HeartIcon(
-        isWishlisted: !p.Wishlisted,
+        pId: p.Id,
         c: Colors.red,
       ) as Icon;
     });
@@ -254,7 +313,7 @@ class _ViewProductState extends State<ViewProduct> {
                         // });
                       },
                       icon: HeartIcon(
-                        isWishlisted: widget.currentProduct.Wishlisted,
+                        pId: widget.currentProduct.Id,
                         c: Colors.white,
                       ),
                     ),
@@ -281,17 +340,14 @@ class _ViewProductState extends State<ViewProduct> {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text("273")),
                       );
-                      // if (int.parse(widget.currentProduct.Quantity) == 0) {
-                      await createCartProduct(pId: widget.currentProduct.Id);
-                      // }
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("279")),
-                      );
-                      await updateProductQuantity(
-                          p: widget.currentProduct, i: 1);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("284")),
-                      );
+                      bool exists = await doesProductExistInCart(
+                          widget.currentProduct.Id);
+                      if (!exists) {
+                        await createCartProduct(pId: widget.currentProduct.Id);
+                      } else {
+                        await updateProductQuantity(
+                            p: widget.currentProduct, i: 1);
+                      }
                     },
                   ))
                 ],
@@ -357,7 +413,7 @@ class _ViewProductState extends State<ViewProduct> {
     );
     setState(() {
       heart = HeartIcon(
-        isWishlisted: !widget.currentProduct.Wishlisted,
+        pId: widget.currentProduct.Id,
         c: white!,
       ) as Icon;
     });

@@ -5,11 +5,13 @@ import 'package:shop/constants.dart';
 import 'package:shop/cubit/Cart.dart';
 import 'package:shop/cubit/addProduct.dart';
 import 'package:shop/cubit/viewProduct.dart';
+import 'package:shop/cubit/wishlistPage.dart';
 import 'package:shop/models/cart_model.dart';
 import 'package:shop/models/product_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:shop/widgets/bottomNavigationbar.dart';
 import 'package:shop/widgets/wishlist.dart';
 
 class CartPage extends StatefulWidget {
@@ -21,8 +23,10 @@ class CartPage extends StatefulWidget {
 }
 
 class _CartPageState extends State<CartPage> {
+  int _currentIndex = 2;
   String? curUserId = FirebaseAuth.instance.currentUser?.uid;
   Icon heart = Icon(Icons.favorite);
+
   Future<void> updateProductQuantity({
     required CartProduct c,
     required int i,
@@ -30,6 +34,15 @@ class _CartPageState extends State<CartPage> {
     // Add your logic to update product wishlist status
     // Use productId to identify the product in the database
     int newQ = int.parse(c.Quantity) + i;
+    if (newQ == 0) {
+      final doc = FirebaseFirestore.instance
+          .collection('users')
+          .doc(curUserId)
+          .collection('cart')
+          .doc(c.Id);
+      doc.delete();
+      return;
+    }
     final docProduct = FirebaseFirestore.instance
         .collection('users')
         .doc(curUserId)
@@ -37,7 +50,9 @@ class _CartPageState extends State<CartPage> {
         .doc(c.Id);
 
     final product = CartProduct(
-        Id: c.Id, Quantity: newQ.toString(), ProductId: c.ProductId);
+      Id: c.Id,
+      Quantity: newQ.toString(),
+    );
 
     final json = product.toJson();
     await docProduct.update(json);
@@ -72,12 +87,14 @@ class _CartPageState extends State<CartPage> {
                             DocumentSnapshot<Map<String, dynamic>>>(
                           future: FirebaseFirestore.instance
                               .collection('products')
-                              .doc(productsInCart[index].ProductId)
+                              .doc(productsInCart[index].Id)
                               .get(),
                           builder: (context, snapshot) {
                             if (snapshot.connectionState ==
                                 ConnectionState.waiting) {
-                              return CircularProgressIndicator();
+                              return CircularProgressIndicator(
+                                color: white,
+                              );
                             } else if (snapshot.hasError) {
                               return Text('Error: ${snapshot.error}');
                             } else if (snapshot.hasData) {
@@ -120,6 +137,29 @@ class _CartPageState extends State<CartPage> {
           color: white,
         ),
       ),
+      bottomNavigationBar: MyBottomWidget(
+          currentIndex: 2,
+          onTabTapped: (index) {
+            setState(() {
+              _currentIndex = index;
+            });
+
+            // Handle navigation based on index
+            if (_currentIndex == 0) {
+              // Navigate to WishlistPage
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => WishlistPage(
+                      h: widget.h,
+                      w: widget.w), // Replace with your WishlistPage
+                ),
+              );
+            } else if (_currentIndex == 1) {
+              // Navigate to CartPage
+              Navigator.pop(context);
+            }
+          }),
     );
   }
 
@@ -199,7 +239,8 @@ class _CartPageState extends State<CartPage> {
                             },
                           ),
                           Text(
-                            product.Quantity, // Replace with actual quantity
+                            cartProduct
+                                .Quantity, // Replace with actual quantity
                             style: TextStyle(fontSize: 16),
                           ),
                           IconButton(
@@ -267,7 +308,7 @@ class _CartPageState extends State<CartPage> {
     );
     setState(() {
       heart = HeartIcon(
-        isWishlisted: !p.Wishlisted,
+        pId: p.Id,
         c: Colors.red,
       ) as Icon;
     });
