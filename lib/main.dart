@@ -2,6 +2,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shop/Login/logIn.dart';
+import 'package:shop/constants.dart';
 import 'package:shop/cubit/product_page.dart';
 
 Future main() async {
@@ -27,7 +28,7 @@ class _MyAppState extends State<MyApp> {
         debugShowCheckedModeBanner: false,
         title: 'Flutter Demo',
         theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+          colorScheme: ColorScheme.fromSeed(seedColor: maincolour!),
           useMaterial3: true,
         ),
         home: LogIn());
