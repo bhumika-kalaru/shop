@@ -24,33 +24,23 @@ class _CartPageState extends State<CartPage> {
   String? curUserId = FirebaseAuth.instance.currentUser?.uid;
   Icon heart = Icon(Icons.favorite);
   Future<void> updateProductQuantity({
-    required Product p,
+    required CartProduct c,
     required int i,
   }) async {
     // Add your logic to update product wishlist status
     // Use productId to identify the product in the database
-    int newQ = int.parse(p.Quantity) + i;
-    final docProduct =
-        FirebaseFirestore.instance.collection('products').doc(p.Id);
+    int newQ = int.parse(c.Quantity) + i;
+    final docProduct = FirebaseFirestore.instance
+        .collection('users')
+        .doc(curUserId)
+        .collection('cart')
+        .doc(c.Id);
 
-    final product = Product(
-      Id: p.Id,
-      Description: p.Description,
-      Name: p.Name,
-      ImageUrl: p.ImageUrl,
-      Price: p.Price,
-      Quantity: newQ.toString(),
-      Wishlisted: p.Wishlisted,
-    );
+    final product = CartProduct(
+        Id: c.Id, Quantity: newQ.toString(), ProductId: c.ProductId);
 
     final json = product.toJson();
     await docProduct.update(json);
-    setState(() {
-      heart = HeartIcon(
-        isWishlisted: !p.Wishlisted,
-        c: Colors.red,
-      ) as Icon;
-    });
   }
 
   @override
@@ -94,7 +84,8 @@ class _CartPageState extends State<CartPage> {
                               final productUsingId = Product.fromJson(
                                   snapshot.data!.data()
                                       as Map<String, dynamic>);
-                              return buildCartProduct(productUsingId);
+                              return buildCartProduct(
+                                  productUsingId, productsInCart[index]);
                             } else {
                               return Text('No data available');
                             }
@@ -132,7 +123,8 @@ class _CartPageState extends State<CartPage> {
     );
   }
 
-  Widget buildCartProduct(Product product) => GestureDetector(
+  Widget buildCartProduct(Product product, CartProduct cartProduct) =>
+      GestureDetector(
         child: Container(
           height: widget.h / 6,
           decoration: BoxDecoration(
@@ -200,9 +192,10 @@ class _CartPageState extends State<CartPage> {
                           IconButton(
                             icon: Icon(Icons.remove),
                             onPressed: () async {
-                              setState(() async {
-                                await updateProductQuantity(p: product, i: -1);
-                              });
+                              // setState(() async {
+                              await updateProductQuantity(
+                                  c: cartProduct, i: -1);
+                              // });
                             },
                           ),
                           Text(
@@ -212,9 +205,7 @@ class _CartPageState extends State<CartPage> {
                           IconButton(
                             icon: Icon(Icons.add),
                             onPressed: () async {
-                              setState(() async {
-                                await updateProductQuantity(p: product, i: 1);
-                              });
+                              await updateProductQuantity(c: cartProduct, i: 1);
                             },
                           ),
                         ],

@@ -124,7 +124,7 @@ class _SignInState extends State<SignIn> {
                     children: [
                   TextSpan(
                     text: "signUp",
-                    style: GoogleFonts.openSans(color: pink, fontSize: 16),
+                    style: GoogleFonts.openSans(color: darkPink, fontSize: 16),
                   )
                 ])),
             onTap: (() {
@@ -137,7 +137,7 @@ class _SignInState extends State<SignIn> {
                 margin: EdgeInsets.symmetric(vertical: h / 100),
                 child: Text(
                   "forgot password!",
-                  style: GoogleFonts.openSans(color: pink, fontSize: 16),
+                  style: GoogleFonts.openSans(color: darkPink, fontSize: 16),
                 )),
             onTap: (() {
               Navigator.push(context,

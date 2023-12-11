@@ -29,9 +29,14 @@ class _ViewProductState extends State<ViewProduct> {
       const SnackBar(content: Text("29")),
     );
     print("Creating product");
-    final docProduct = FirebaseFirestore.instance.collection('products').doc();
+    final docProduct = FirebaseFirestore.instance
+        .collection('users')
+        .doc(curUserId)
+        .collection('cart')
+        .doc();
     final product = CartProduct(
       Id: docProduct.id,
+      Quantity: '1',
       ProductId: pId,
     );
     ScaffoldMessenger.of(context).showSnackBar(
@@ -276,9 +281,9 @@ class _ViewProductState extends State<ViewProduct> {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text("273")),
                       );
-                      if (int.parse(widget.currentProduct.Quantity) == 0) {
-                        await createCartProduct(pId: widget.currentProduct.Id);
-                      }
+                      // if (int.parse(widget.currentProduct.Quantity) == 0) {
+                      await createCartProduct(pId: widget.currentProduct.Id);
+                      // }
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text("279")),
                       );

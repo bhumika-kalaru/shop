@@ -91,7 +91,7 @@ class _SignUpState extends State<SignUp> {
                     children: [
                   TextSpan(
                     text: "LogIn",
-                    style: GoogleFonts.openSans(color: pink, fontSize: 16),
+                    style: GoogleFonts.openSans(color: darkPink, fontSize: 16),
                   )
                 ])),
             onTap: (() {

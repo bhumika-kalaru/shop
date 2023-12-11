@@ -16,6 +16,7 @@ final Color? maincolour = Color(0xff2B3467);
 final Color cream = Color(0xffFCFFE7);
 // 0xff2B3467
 
+final Color darkPink = Color(0xfff61f7a);
 final Color pink = Color.fromARGB(255, 252, 242, 247);
 final Color amber = Colors.amber;
 final Color one = maincolour!;
