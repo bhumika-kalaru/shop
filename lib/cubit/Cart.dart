@@ -27,6 +27,73 @@ class _CartPageState extends State<CartPage> {
   int _currentIndex = 2;
   String? curUserId = FirebaseAuth.instance.currentUser?.uid;
   Icon heart = Icon(Icons.favorite);
+  late List<CartProduct?> productsInCart = [];
+
+  Future<List<CartProduct?>> getCartProducts(String userId) async {
+    QuerySnapshot cartSnapshot = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(userId)
+        .collection('cart')
+        .get();
+
+    return cartSnapshot.docs
+        .map((doc) => doc.exists
+            ? CartProduct.fromJson(doc.data() as Map<String, dynamic>)
+            : null)
+        .toList();
+  }
+
+  Future<double> calculateTotalPrice(List<CartProduct?> cartProducts) async {
+    double totalPrice = 0;
+
+    for (var cartProduct in cartProducts) {
+      if (cartProduct != null) {
+        final productSnapshot = await FirebaseFirestore.instance
+            .collection('products')
+            .doc(cartProduct.Id)
+            .get();
+
+        if (productSnapshot.exists) {
+          final product = Product.fromJson(
+            productSnapshot.data() as Map<String, dynamic>,
+          );
+
+          // Assuming the price is stored as a String, you may need to adjust this
+          totalPrice +=
+              double.parse(product.Price) * int.parse(cartProduct.Quantity);
+        }
+      }
+    }
+
+    return totalPrice;
+  }
+
+  Future<void> clearCart(String userId) async {
+    // Delete all cart products
+    QuerySnapshot cartSnapshot = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(userId)
+        .collection('cart')
+        .get();
+
+    for (QueryDocumentSnapshot cartDoc in cartSnapshot.docs) {
+      await cartDoc.reference.delete();
+    }
+  }
+
+  Future<void> handleCheckout() async {
+    List<CartProduct?> cartProducts = await getCartProducts(curUserId!);
+    if (cartProducts != null) {
+      // await addOrderDetails(curUserId!, cartProducts);
+      // Clear the cart
+      await clearCart(
+          curUserId!); // Show a success message or navigate to a confirmation screen
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Cart is Empty')),
+      );
+    }
+  }
 
   Future<void> updateProductQuantity({
     required CartProduct c,
@@ -57,6 +124,7 @@ class _CartPageState extends State<CartPage> {
 
     final json = product.toJson();
     await docProduct.update(json);
+    setState(() {});
   }
 
   @override
@@ -64,7 +132,7 @@ class _CartPageState extends State<CartPage> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.white,
-        title: Text("My Cart"),
+        title: Text("My Cart!"),
         centerTitle: true,
       ),
       body: Stack(
@@ -77,7 +145,7 @@ class _CartPageState extends State<CartPage> {
                 if (snapshot.hasError) {
                   return Text('Something went wrong! ${snapshot.error}');
                 } else if (snapshot.hasData) {
-                  final productsInCart = snapshot.data!;
+                  productsInCart = snapshot.data!;
                   print('$productsInCart');
 
                   return Center(
@@ -88,7 +156,7 @@ class _CartPageState extends State<CartPage> {
                             DocumentSnapshot<Map<String, dynamic>>>(
                           future: FirebaseFirestore.instance
                               .collection('products')
-                              .doc(productsInCart[index].Id)
+                              .doc(productsInCart[index]!.Id)
                               .get(),
                           builder: (context, snapshot) {
                             if (snapshot.connectionState ==
@@ -103,7 +171,7 @@ class _CartPageState extends State<CartPage> {
                                   snapshot.data!.data()
                                       as Map<String, dynamic>);
                               return buildCartProduct(
-                                  productUsingId, productsInCart[index]);
+                                  productUsingId, productsInCart[index]!);
                             } else {
                               return Text('No data available');
                             }
@@ -120,23 +188,99 @@ class _CartPageState extends State<CartPage> {
               }),
             ),
           ),
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: Container(
+              decoration: BoxDecoration(
+                  color: white,
+                  borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(20),
+                      topRight: Radius.circular(20))),
+              padding: EdgeInsets.only(
+                left: 20,
+                right: 10,
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  FutureBuilder<double>(
+                    future: calculateTotalPrice(productsInCart),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return CircularProgressIndicator(
+                          color: white,
+                        );
+                      } else if (snapshot.hasData) {
+                        final totalPrice = snapshot.data!;
+                        return Column(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '  Total: ',
+                              style: TextStyle(
+                                  color: maincolour,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w500),
+                            ),
+                            Text(
+                              ' \₹ ${totalPrice.toStringAsFixed(2)}',
+                              style: TextStyle(
+                                color: maincolour,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 24,
+                              ),
+                            ),
+                          ],
+                        );
+                      } else {
+                        return Text('');
+                      }
+                    },
+                  ),
+                  GestureDetector(
+                    child: Container(
+                      margin: EdgeInsets.all(12),
+                      padding: EdgeInsets.only(
+                          left: 20, right: 20, top: 10, bottom: 10),
+                      height: 70,
+                      decoration: BoxDecoration(
+                          color: darkPink, // Adjust the color as needed
+                          borderRadius: BorderRadius.circular(10)),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.shopping_cart_checkout_sharp,
+                                color: white,
+                                size: 28,
+                              ),
+                              // Expanded(child: Container()),
+                              Text(
+                                ' Checkout',
+                                style: GoogleFonts.openSans(
+                                    textStyle: TextStyle(
+                                        color: Colors.white, fontSize: 24)),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    onTap: () async {
+                      await handleCheckout();
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: Color(0xfff61f7a),
-        onPressed: () {
-          setState(() {
-            Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) =>
-                        AddProduct(h: widget.h, w: widget.w)));
-          });
-        },
-        child: Icon(
-          Icons.add,
-          color: white,
-        ),
       ),
     );
   }
@@ -214,6 +358,7 @@ class _CartPageState extends State<CartPage> {
                               await updateProductQuantity(
                                   c: cartProduct, i: -1);
                               // });
+                              setState(() {});
                             },
                           ),
                           Text(
@@ -260,9 +405,6 @@ class _CartPageState extends State<CartPage> {
     if (!wishlistStatus) {
       status = 'Removing from wishlist';
     }
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(status)),
-    );
     final docProduct =
         FirebaseFirestore.instance.collection('products').doc(p.Id);
 
@@ -281,9 +423,6 @@ class _CartPageState extends State<CartPage> {
     if (!wishlistStatus) {
       updatedStatus = "Removed from Wishlist";
     }
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(updatedStatus)),
-    );
     setState(() {
       heart = HeartIcon(
         pId: p.Id,
