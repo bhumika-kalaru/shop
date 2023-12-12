@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shop/constants.dart';
 import 'package:shop/cubit/Cart.dart';
+import 'package:shop/cubit/product_page.dart';
 import 'package:shop/cubit/viewProduct.dart';
 import 'package:shop/models/product_model.dart';
 import 'package:shop/models/wishlist_model.dart';
@@ -88,27 +89,6 @@ class _WishlistPageState extends State<WishlistPage> {
           ),
         ],
       ),
-      bottomNavigationBar: MyBottomWidget(
-          currentIndex: 0,
-          onTabTapped: (index) {
-            setState(() {
-              _currentIndex = index;
-            });
-
-            // Handle navigation based on index
-            if (_currentIndex == 1) {
-              // Navigate to WishlistPage
-              Navigator.pop(context);
-            } else if (_currentIndex == 2) {
-              // Navigate to CartPage
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => CartPage(h: widget.h, w: widget.w),
-                ),
-              );
-            }
-          }),
     );
   }
 

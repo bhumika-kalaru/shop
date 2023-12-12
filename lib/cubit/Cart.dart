@@ -4,6 +4,7 @@ import 'package:shop/Login/logIn.dart';
 import 'package:shop/constants.dart';
 import 'package:shop/cubit/Cart.dart';
 import 'package:shop/cubit/addProduct.dart';
+import 'package:shop/cubit/product_page.dart';
 import 'package:shop/cubit/viewProduct.dart';
 import 'package:shop/cubit/wishlistPage.dart';
 import 'package:shop/models/cart_model.dart';
@@ -137,29 +138,6 @@ class _CartPageState extends State<CartPage> {
           color: white,
         ),
       ),
-      bottomNavigationBar: MyBottomWidget(
-          currentIndex: 2,
-          onTabTapped: (index) {
-            setState(() {
-              _currentIndex = index;
-            });
-
-            // Handle navigation based on index
-            if (_currentIndex == 0) {
-              // Navigate to WishlistPage
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => WishlistPage(
-                      h: widget.h,
-                      w: widget.w), // Replace with your WishlistPage
-                ),
-              );
-            } else if (_currentIndex == 1) {
-              // Navigate to CartPage
-              Navigator.pop(context);
-            }
-          }),
     );
   }
 

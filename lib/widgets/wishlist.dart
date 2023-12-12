@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -33,16 +35,16 @@ class _HeartIconState extends State<HeartIcon> {
       doc.delete();
       return;
     }
-    final docProduct =
-        FirebaseFirestore.instance.collection('products').doc(pId);
+    final docWishlistProduct = FirebaseFirestore.instance
+        .collection('users')
+        .doc(curUserId)
+        .collection('wishlist')
+        .doc(pId);
 
     final product = WishlistProduct(Id: pId);
 
     final json = product.toJson();
-    await docProduct.update(json);
-    if (!wishlistStatus) {
-      updatedStatus = "Removed from Wishlist";
-    }
+    await docWishlistProduct.set(json);
   }
 
   @override

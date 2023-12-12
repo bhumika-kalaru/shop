@@ -46,26 +46,13 @@ class _VerifyState extends State<Verify> {
                   ),
                   GestureDetector(
                       onTap: () async {
-                        int size = email.text.length, flag = 1, j = 0;
-                        String s = "iiita.ac.in", mail = email.text.toString();
-                        for (int i = size - 11; i < size; i++) {
-                          if (s[j] != mail[i]) {
-                            flag = 0;
-                          }
-                          j++;
-                        }
                         myauth.setConfig(
                             appEmail: "me@rohitchouhan.com",
                             appName: "Email OTP",
                             userEmail: email.text,
                             otpLength: 6,
                             otpType: OTPType.digitsOnly);
-                        if (flag == 0) {
-                          ScaffoldMessenger.of(context)
-                              .showSnackBar(const SnackBar(
-                            content: Text("Email does not belong to community"),
-                          ));
-                        } else if (await myauth.sendOTP() == true) {
+                        if (await myauth.sendOTP() == true) {
                           ScaffoldMessenger.of(context)
                               .showSnackBar(const SnackBar(
                             content: Text("OTP has been sent"),
@@ -83,7 +70,7 @@ class _VerifyState extends State<Verify> {
                           Text(
                             "Send OTP",
                             style: GoogleFonts.openSans(
-                                color: pink, fontWeight: FontWeight.w700),
+                                color: darkPink, fontWeight: FontWeight.w700),
                           ),
                         ],
                       )),

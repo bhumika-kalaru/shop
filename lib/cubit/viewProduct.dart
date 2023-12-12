@@ -45,9 +45,6 @@ class _ViewProductState extends State<ViewProduct> {
   Future<void> createCartProduct({
     required String pId,
   }) async {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("29")),
-    );
     print("Creating product");
     final docProduct = FirebaseFirestore.instance
         .collection('users')
@@ -58,13 +55,23 @@ class _ViewProductState extends State<ViewProduct> {
       Id: pId,
       Quantity: '1',
     );
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("38")),
-    );
     final json = product.toJson();
     await docProduct.set(json);
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("43")),
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Added to Cart"),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('OK'),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -85,61 +92,104 @@ class _ViewProductState extends State<ViewProduct> {
     }
   }
 
-  Future<void> createWishlistProduct({
+  Future<void> updateProductWishlist({
     required String pId,
+    required bool wishlistStatus,
   }) async {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("29")),
-    );
-    print("Creating product");
-    final docProduct = FirebaseFirestore.instance
+    // Add your logic to update product wishlist status
+    // Use productId to identify the product in the database
+    String status = 'Adding to Wishlist', updatedStatus = "Added to Wishlist";
+    if (!wishlistStatus) {
+      status = 'Removing from wishlist';
+      final doc = FirebaseFirestore.instance
+          .collection('users')
+          .doc(curUserId)
+          .collection('wishlist')
+          .doc(pId);
+      doc.delete();
+      return;
+    }
+    final docWishlistProduct = FirebaseFirestore.instance
         .collection('users')
         .doc(curUserId)
         .collection('wishlist')
         .doc(pId);
+
     final product = WishlistProduct(Id: pId);
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("38")),
-    );
+
     final json = product.toJson();
-    await docProduct.set(json);
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("43")),
-    );
+    await docWishlistProduct.set(json);
   }
 
   Future<void> updateProductQuantity({
-    required Product p,
+    required CartProduct c,
     required int i,
   }) async {
-    // Add your logic to update product wishlist status
+    // Add your logic to update product cart status
     // Use productId to identify the product in the database
-    print("53");
-    int newQ = int.parse(p.Quantity) + i;
-    final docProduct =
-        FirebaseFirestore.instance.collection('products').doc(p.Id);
+    int newQ = int.parse(c.Quantity) + i;
+    if (newQ == 0) {
+      final doc = FirebaseFirestore.instance
+          .collection('users')
+          .doc(curUserId)
+          .collection('cart')
+          .doc(c.Id);
+      doc.delete();
+      return;
+    }
 
-    print("58");
-    final product = Product(
-      Id: p.Id,
-      Description: p.Description,
-      Name: p.Name,
-      ImageUrl: p.ImageUrl,
-      Price: p.Price,
+    final docProduct = FirebaseFirestore.instance
+        .collection('users')
+        .doc(curUserId)
+        .collection('cart')
+        .doc(c.Id);
+
+    final product = CartProduct(
+      Id: c.Id,
       Quantity: newQ.toString(),
-      Wishlisted: p.Wishlisted,
     );
 
-    print("69");
     final json = product.toJson();
     await docProduct.update(json);
-    print("72");
-    setState(() {
-      heart = HeartIcon(
-        pId: p.Id,
-        c: Colors.red,
-      ) as Icon;
-    });
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Updated Cart"),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<CartProduct?> getCartProduct(String productId) async {
+    try {
+      DocumentSnapshot doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(curUserId)
+          .collection('cart')
+          .doc(productId)
+          .get();
+
+      if (doc.exists) {
+        // If the document exists, convert the data to a CartProduct object
+        return CartProduct.fromJson(doc.data() as Map<String, dynamic>);
+      } else {
+        // If the document doesn't exist, return null
+        return null;
+      }
+    } catch (e) {
+      print('Error retrieving cart product: $e');
+      return null;
+    }
   }
 
   @override
@@ -308,7 +358,7 @@ class _ViewProductState extends State<ViewProduct> {
                       onPressed: () async {
                         // setState(() async {
                         await updateProductWishlist(
-                            p: widget.currentProduct,
+                            pId: widget.currentProduct.Id,
                             wishlistStatus: !widget.currentProduct.Wishlisted);
                         // });
                       },
@@ -337,16 +387,20 @@ class _ViewProductState extends State<ViewProduct> {
                           borderRadius: BorderRadius.circular(30)),
                     ),
                     onTap: () async {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("273")),
-                      );
                       bool exists = await doesProductExistInCart(
                           widget.currentProduct.Id);
                       if (!exists) {
                         await createCartProduct(pId: widget.currentProduct.Id);
                       } else {
-                        await updateProductQuantity(
-                            p: widget.currentProduct, i: 1);
+                        CartProduct? existingCartProduct =
+                            await getCartProduct(widget.currentProduct.Id);
+
+                        if (existingCartProduct != null) {
+                          await updateProductQuantity(
+                            c: existingCartProduct,
+                            i: 1,
+                          );
+                        }
                       }
                     },
                   ))
@@ -382,40 +436,5 @@ class _ViewProductState extends State<ViewProduct> {
         ],
       ),
     );
-  }
-
-  Future<void> updateProductWishlist({
-    required Product p,
-    required bool wishlistStatus,
-  }) async {
-    String updatedStatus = "Added to Wishlist";
-    final docProduct = FirebaseFirestore.instance
-        .collection('products')
-        .doc(widget.currentProduct.Id);
-
-    final product = Product(
-      Id: widget.currentProduct.Id,
-      Description: widget.currentProduct.Description,
-      Name: widget.currentProduct.Name,
-      ImageUrl: widget.currentProduct.ImageUrl,
-      Price: widget.currentProduct.Price,
-      Quantity: widget.currentProduct.Quantity,
-      Wishlisted: wishlistStatus,
-    );
-
-    final json = product.toJson();
-    await docProduct.update(json);
-    if (!wishlistStatus) {
-      updatedStatus = "Removed from Wishlist";
-    }
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(updatedStatus)),
-    );
-    setState(() {
-      heart = HeartIcon(
-        pId: widget.currentProduct.Id,
-        c: white!,
-      ) as Icon;
-    });
   }
 }

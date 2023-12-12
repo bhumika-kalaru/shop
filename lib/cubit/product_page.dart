@@ -25,6 +25,22 @@ class _ProductPageState extends State<ProductPage> {
   int _currentIndex = 1;
   String? curUserId = FirebaseAuth.instance.currentUser?.uid;
   Icon heart = Icon(Icons.favorite);
+  Future<bool> _checkProductExistenceInWishlist(String productId) async {
+    try {
+      var snapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(FirebaseAuth.instance.currentUser!.uid)
+          .collection('wishlist')
+          .doc(productId)
+          .get();
+
+      return snapshot.exists;
+    } catch (e) {
+      print('Error checking product existence: $e');
+      return false;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -87,45 +103,49 @@ class _ProductPageState extends State<ProductPage> {
       body: Stack(
         children: [
           Center(
-            child: Container(
-              color: Colors.white,
-              child: StreamBuilder<List<Product>>(
-                stream: readproducts(),
-                builder: ((context, snapshot) {
-                  if (snapshot.hasError) {
-                    return Text('Something went wrong! ${snapshot.error}');
-                  } else if (snapshot.hasData) {
-                    final products = snapshot.data!;
-                    print('$products');
+              child: Container(
+                  color: Colors.white,
+                  child: StreamBuilder<List<Product>>(
+                    stream: readproducts(),
+                    builder: ((context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return Center(
+                          child: CircularProgressIndicator(),
+                        );
+                      } else if (snapshot.hasError) {
+                        return Center(
+                          child: Text('Error: ${snapshot.error}'),
+                        );
+                      } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                        return Center(
+                          child: Text('No products available.'),
+                        );
+                      } else {
+                        final products = snapshot.data!;
+                        print('$products');
 
-                    return Center(
-                      child: ListView.builder(
-                        itemCount: (products.length / 2).ceil(),
-                        itemBuilder: (context, index) {
-                          final int firstIndex = index * 2;
-                          final int secondIndex = firstIndex + 1;
+                        return Center(
+                          child: ListView.builder(
+                            itemCount: (products.length / 2).ceil(),
+                            itemBuilder: (context, index) {
+                              final int firstIndex = index * 2;
+                              final int secondIndex = firstIndex + 1;
 
-                          return Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              if (firstIndex < products.length)
-                                buildProduct(products[firstIndex]),
-                              if (secondIndex < products.length)
-                                buildProduct(products[secondIndex]),
-                            ],
-                          );
-                        },
-                      ),
-                    );
-                  } else {
-                    return Center(
-                      child: CircularProgressIndicator(),
-                    );
-                  }
-                }),
-              ),
-            ),
-          ),
+                              return Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  if (firstIndex < products.length)
+                                    buildProduct(products[firstIndex]),
+                                  if (secondIndex < products.length)
+                                    buildProduct(products[secondIndex]),
+                                ],
+                              );
+                            },
+                          ),
+                        );
+                      }
+                    }),
+                  )))
         ],
       ),
       floatingActionButton: FloatingActionButton(
@@ -236,7 +256,9 @@ class _ProductPageState extends State<ProductPage> {
                               // Handle wishlisting logic here
                               await updateProductWishlist(
                                 p: product,
-                                wishlistStatus: !product.Wishlisted,
+                                wishlistStatus:
+                                    await _checkProductExistenceInWishlist(
+                                        product.Id),
                               );
                             },
                             icon: HeartIcon(
