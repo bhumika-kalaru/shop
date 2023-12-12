@@ -25,6 +25,35 @@ class _ProductPageState extends State<ProductPage> {
   int _currentIndex = 1;
   String? curUserId = FirebaseAuth.instance.currentUser?.uid;
   Icon heart = Icon(Icons.favorite);
+  Future<String> getUserRole() async {
+    try {
+      User? user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        // Get the user's role from Firestore
+        DocumentSnapshot<Map<String, dynamic>> snapshot =
+            await FirebaseFirestore.instance
+                .collection('users')
+                .doc(user.uid)
+                .get();
+
+        if (snapshot.exists) {
+          // Return the user's role
+          return snapshot.data()?['role'] ??
+              'default_role'; // Provide a default role
+        } else {
+          // User document not found
+          throw Exception("User document not found");
+        }
+      } else {
+        // User is not authenticated
+        throw Exception("User is not authenticated");
+      }
+    } catch (e) {
+      print("Error getting user role: $e");
+      throw Exception("Error getting user role");
+    }
+  }
+
   Future<bool> _checkProductExistenceInWishlist(String productId) async {
     try {
       var snapshot = await FirebaseFirestore.instance
@@ -148,21 +177,32 @@ class _ProductPageState extends State<ProductPage> {
                   )))
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: Color(0xfff61f7a),
-        onPressed: () {
-          setState(() {
-            Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) =>
-                        AddProduct(h: widget.h, w: widget.w)));
-          });
+      floatingActionButton: FutureBuilder<String>(
+        future: getUserRole(), // Assuming getUserRole returns a Future<String>
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Container(); // Return an empty container while waiting for user role
+          } else if (snapshot.hasData &&
+              snapshot.data == 'P0hlA6S1pebQKv2QEmld0J8rXfY2') {
+            return FloatingActionButton(
+              backgroundColor: Color(0xfff61f7a),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => AddProduct(h: widget.h, w: widget.w),
+                  ),
+                );
+              },
+              child: Icon(
+                Icons.add,
+                color: white,
+              ),
+            );
+          } else {
+            return Container(); // Return an empty container if user is not admin
+          }
         },
-        child: Icon(
-          Icons.add,
-          color: white,
-        ),
       ),
       bottomNavigationBar: MyBottomWidget(
           currentIndex: 1,
@@ -197,8 +237,8 @@ class _ProductPageState extends State<ProductPage> {
 
   Widget buildProduct(Product product) => GestureDetector(
         child: Container(
-          width: 3 * widget.w / 7,
-          height: widget.h / 3,
+          width: 0.43 * widget.w,
+          height: 0.34 * widget.h,
           decoration: BoxDecoration(
             color: Colors.white,
             boxShadow: blueShadow,
@@ -239,7 +279,7 @@ class _ProductPageState extends State<ProductPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
                             product.Name,

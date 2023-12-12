@@ -45,7 +45,6 @@ class _CartPageState extends State<CartPage> {
 
   Future<double> calculateTotalPrice(List<CartProduct?> cartProducts) async {
     double totalPrice = 0;
-
     for (var cartProduct in cartProducts) {
       if (cartProduct != null) {
         final productSnapshot = await FirebaseFirestore.instance
@@ -125,6 +124,12 @@ class _CartPageState extends State<CartPage> {
     final json = product.toJson();
     await docProduct.update(json);
     setState(() {});
+  }
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
   }
 
   @override
@@ -245,7 +250,7 @@ class _CartPageState extends State<CartPage> {
                       margin: EdgeInsets.all(12),
                       padding: EdgeInsets.only(
                           left: 20, right: 20, top: 10, bottom: 10),
-                      height: 70,
+                      height: widget.h / 12,
                       decoration: BoxDecoration(
                           color: darkPink, // Adjust the color as needed
                           borderRadius: BorderRadius.circular(10)),
@@ -358,7 +363,6 @@ class _CartPageState extends State<CartPage> {
                               await updateProductQuantity(
                                   c: cartProduct, i: -1);
                               // });
-                              setState(() {});
                             },
                           ),
                           Text(
@@ -394,42 +398,6 @@ class _CartPageState extends State<CartPage> {
           );
         },
       );
-
-  Future<void> updateProductWishlist({
-    required Product p,
-    required bool wishlistStatus,
-  }) async {
-    // Add your logic to update product wishlist status
-    // Use productId to identify the product in the database
-    String status = 'Adding to Wishlist', updatedStatus = "Added to Wishlist";
-    if (!wishlistStatus) {
-      status = 'Removing from wishlist';
-    }
-    final docProduct =
-        FirebaseFirestore.instance.collection('products').doc(p.Id);
-
-    final product = Product(
-      Id: p.Id,
-      Description: p.Description,
-      Name: p.Name,
-      ImageUrl: p.ImageUrl,
-      Price: p.Price,
-      Quantity: p.Quantity,
-      Wishlisted: wishlistStatus,
-    );
-
-    final json = product.toJson();
-    await docProduct.update(json);
-    if (!wishlistStatus) {
-      updatedStatus = "Removed from Wishlist";
-    }
-    setState(() {
-      heart = HeartIcon(
-        pId: p.Id,
-        c: Colors.red,
-      ) as Icon;
-    });
-  }
 
   Stream<List<CartProduct>> readProductsInCart(String curUserId) =>
       FirebaseFirestore.instance
