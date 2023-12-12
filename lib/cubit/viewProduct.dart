@@ -42,6 +42,34 @@ class _ViewProductState extends State<ViewProduct> {
     }
   }
 
+  Future<String> getUserRole() async {
+    try {
+      User? user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        // Get the user's role from Firestore
+        DocumentSnapshot<Map<String, dynamic>> snapshot =
+            await FirebaseFirestore.instance
+                .collection('users')
+                .doc(user.uid)
+                .get();
+
+        if (snapshot.exists) {
+          // Return the user's role
+          return curUserId!; // Provide a default role
+        } else {
+          // User document not found
+          throw Exception("User document not found");
+        }
+      } else {
+        // User is not authenticated
+        throw Exception("User is not authenticated");
+      }
+    } catch (e) {
+      print("Error getting user role: $e");
+      throw Exception("Error getting user role");
+    }
+  }
+
   Future<void> createCartProduct({
     required String pId,
   }) async {
@@ -211,18 +239,44 @@ class _ViewProductState extends State<ViewProduct> {
         actions: [
           Container(
             margin: const EdgeInsets.only(right: 4),
-            child: IconButton(
-                onPressed: () {
-                  Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => EditProduct(
-                              currentProduct: widget.currentProduct)));
-                },
-                icon: Icon(
-                  Icons.edit,
-                  color: pink,
-                )),
+            child: FutureBuilder<String>(
+              future: getUserRole(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return CircularProgressIndicator();
+                } else if (snapshot.hasError) {
+                  return Text('Error: ${snapshot.error}');
+                } else {
+                  String userRole = snapshot.data!;
+
+                  // Check if the user has the admin role
+                  bool isAdmin = userRole == 'P0hlA6S1pebQKv2QEmld0J8rXfY2';
+
+                  // Conditionally show the edit button for admin users
+                  if (isAdmin) {
+                    return IconButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => EditProduct(
+                              currentProduct: widget.currentProduct,
+                            ),
+                          ),
+                        );
+                      },
+                      icon: Icon(
+                        Icons.edit,
+                        color: pink,
+                      ),
+                    );
+                  } else {
+                    // Return an empty container if the user is not an admin
+                    return Container();
+                  }
+                }
+              },
+            ),
           )
         ],
       ),

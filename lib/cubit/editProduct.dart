@@ -88,8 +88,35 @@ class _EditProductState extends State<EditProduct> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            icon: Icon(
+              Icons.arrow_back_ios,
+              color: Colors.white,
+            )),
         backgroundColor: maincolour,
-        title: const Text('Editing Product'),
+        title: const Text(
+          'Editing Product',
+          style: TextStyle(color: Colors.white),
+        ),
+        actions: [
+          IconButton(
+              onPressed: () async {
+                final doc = await FirebaseFirestore.instance
+                    .collection('products')
+                    .doc(widget.currentProduct.Id);
+                doc.delete();
+                Navigator.pop(context);
+                Navigator.pop(context);
+                return;
+              },
+              icon: Icon(
+                Icons.delete,
+                color: Colors.red,
+              ))
+        ],
         centerTitle: true,
       ),
       body: SingleChildScrollView(

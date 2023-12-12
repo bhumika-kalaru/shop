@@ -38,8 +38,7 @@ class _ProductPageState extends State<ProductPage> {
 
         if (snapshot.exists) {
           // Return the user's role
-          return snapshot.data()?['role'] ??
-              'default_role'; // Provide a default role
+          return curUserId!; // Provide a default role
         } else {
           // User document not found
           throw Exception("User document not found");
@@ -183,7 +182,7 @@ class _ProductPageState extends State<ProductPage> {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Container(); // Return an empty container while waiting for user role
           } else if (snapshot.hasData &&
-              snapshot.data == 'P0hlA6S1pebQKv2QEmld0J8rXfY2') {
+              snapshot.data == "P0hlA6S1pebQKv2QEmld0J8rXfY2") {
             return FloatingActionButton(
               backgroundColor: Color(0xfff61f7a),
               onPressed: () {
