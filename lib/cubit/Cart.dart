@@ -70,6 +70,39 @@ class _CartPageState extends State<CartPage> {
     return totalPrice;
   }
 
+  Future<double> calculateTotalPriceUsingUserId(String userId) async {
+    double totalPriceUsingId = 0;
+
+    // Retrieve cart products for the given user
+    QuerySnapshot cartSnapshot = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(userId)
+        .collection('cart')
+        .get();
+
+    for (QueryDocumentSnapshot cartDoc in cartSnapshot.docs) {
+      if (cartDoc.exists) {
+        final productSnapshot = await FirebaseFirestore.instance
+            .collection('products')
+            .doc(cartDoc['productId']) // Replace with the actual field name
+            .get();
+
+        if (productSnapshot.exists) {
+          final product = Product.fromJson(
+            productSnapshot.data() as Map<String, dynamic>,
+          );
+
+          // Assuming the price is stored as a String, you may need to adjust this
+          totalPrice += double.parse(product.Price) *
+              int.parse(
+                  cartDoc['quantity']); // Replace with the actual field name
+        }
+      }
+    }
+
+    return totalPriceUsingId;
+  }
+
   Future<bool> isCartEmpty(String userId) async {
     QuerySnapshot isCart = await FirebaseFirestore.instance
         .collection('users')
