@@ -79,12 +79,15 @@ class _CartPageState extends State<CartPage> {
         .doc(userId)
         .collection('cart')
         .get();
+    if (cartSnapshot.docs.isEmpty) {
+      return 0;
+    }
 
     for (QueryDocumentSnapshot cartDoc in cartSnapshot.docs) {
       if (cartDoc.exists) {
         final productSnapshot = await FirebaseFirestore.instance
             .collection('products')
-            .doc(cartDoc['productId']) // Replace with the actual field name
+            .doc(cartDoc.id) // Replace with the actual field name
             .get();
 
         if (productSnapshot.exists) {
@@ -93,7 +96,7 @@ class _CartPageState extends State<CartPage> {
           );
 
           // Assuming the price is stored as a String, you may need to adjust this
-          totalPrice += double.parse(product.Price) *
+          totalPriceUsingId += double.parse(product.Price) *
               int.parse(
                   cartDoc['quantity']); // Replace with the actual field name
         }
@@ -154,19 +157,24 @@ class _CartPageState extends State<CartPage> {
       // Cart is not empty, proceed with order placement
 
       // Update quantity to 0 for each cart product
+
+      // Calculate the total price of the order
+      double total = await calculateTotalPriceUsingUserId(curUserId!);
       for (QueryDocumentSnapshot cartDoc in cartSnapshot.docs) {
         final cartProduct =
             CartProduct.fromJson(cartDoc.data() as Map<String, dynamic>);
         await updateProductQuantity(
             c: cartProduct, i: -int.parse(cartProduct.Quantity));
       }
+      print("paih");
 
-      // Show order placed successfully message
+      // Show order placed successfully message with total price
       showDialog(
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-            title: Center(child: Text("Order placed successfully")),
+            title: Center(
+                child: Text("Order placed successfully with price $total")),
             actions: <Widget>[
               TextButton(
                 onPressed: () {
@@ -329,11 +337,10 @@ class _CartPageState extends State<CartPage> {
           ),
           Positioned(
             bottom: 0,
-            left: 0,
             right: 0,
             child: Container(
               decoration: BoxDecoration(
-                  color: white,
+                  // color: white,
                   borderRadius: BorderRadius.only(
                       topLeft: Radius.circular(20),
                       topRight: Radius.circular(20))),
@@ -344,41 +351,6 @@ class _CartPageState extends State<CartPage> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  FutureBuilder<double>(
-                    future: calculateTotalPrice(productsInCart),
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return CircularProgressIndicator(
-                          color: white,
-                        );
-                      } else if (snapshot.hasData) {
-                        final totalPrice = snapshot.data!;
-                        return Column(
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              '  Total: ',
-                              style: TextStyle(
-                                  color: maincolour,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w500),
-                            ),
-                            Text(
-                              ' \₹ ${totalPrice.toStringAsFixed(2)}',
-                              style: TextStyle(
-                                color: maincolour,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 24,
-                              ),
-                            ),
-                          ],
-                        );
-                      } else {
-                        return Text('');
-                      }
-                    },
-                  ),
                   GestureDetector(
                     child: Container(
                       margin: EdgeInsets.all(12),
