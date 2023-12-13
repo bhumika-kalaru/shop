@@ -24,7 +24,9 @@ class CartPage extends StatefulWidget {
 }
 
 class _CartPageState extends State<CartPage> {
+  double totalPrice = 0;
   bool isUpdatingQuantity = false;
+  bool placingOrder = false;
   int _currentIndex = 2;
   String? curUserId = FirebaseAuth.instance.currentUser?.uid;
   Icon heart = Icon(Icons.favorite);
@@ -45,7 +47,7 @@ class _CartPageState extends State<CartPage> {
   }
 
   Future<double> calculateTotalPrice(List<CartProduct?> cartProducts) async {
-    double totalPrice = 0;
+    totalPrice = 0;
     for (var cartProduct in cartProducts) {
       if (cartProduct != null) {
         final productSnapshot = await FirebaseFirestore.instance
@@ -68,16 +70,85 @@ class _CartPageState extends State<CartPage> {
     return totalPrice;
   }
 
+  Future<bool> isCartEmpty(String userId) async {
+    QuerySnapshot isCart = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(userId)
+        .collection('cart')
+        .get();
+    if (isCart.docs.isEmpty) {
+      return true;
+    }
+    return false;
+  }
+
   Future<void> clearCart(String userId) async {
-    // Delete all cart products
+    setState(() {
+      placingOrder = true;
+    });
+
+    // Check if the cart is empty
     QuerySnapshot cartSnapshot = await FirebaseFirestore.instance
         .collection('users')
         .doc(userId)
         .collection('cart')
         .get();
 
-    for (QueryDocumentSnapshot cartDoc in cartSnapshot.docs) {
-      await cartDoc.reference.delete();
+    if (cartSnapshot.docs.isEmpty) {
+      // Cart is empty, show a message
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Center(child: Text("Cart is empty")),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: Text('OK'),
+              ),
+            ],
+          );
+        },
+      ).then((_) {
+        setState(() {
+          placingOrder = false;
+        });
+      });
+      return;
+    } else {
+      // Cart is not empty, proceed with order placement
+
+      // Update quantity to 0 for each cart product
+      for (QueryDocumentSnapshot cartDoc in cartSnapshot.docs) {
+        final cartProduct =
+            CartProduct.fromJson(cartDoc.data() as Map<String, dynamic>);
+        await updateProductQuantity(
+            c: cartProduct, i: -int.parse(cartProduct.Quantity));
+      }
+
+      // Show order placed successfully message
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Center(child: Text("Order placed successfully")),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: Text('OK'),
+              ),
+            ],
+          );
+        },
+      ).then((_) {
+        setState(() {
+          placingOrder = false;
+        });
+      });
     }
   }
 
@@ -105,20 +176,9 @@ class _CartPageState extends State<CartPage> {
     });
     // Add your logic to update product wishlist status
     // Use productId to identify the product in the database
+
     int newQ = int.parse(c.Quantity) + i;
-    if (newQ == 0) {
-      final doc = FirebaseFirestore.instance
-          .collection('users')
-          .doc(curUserId)
-          .collection('cart')
-          .doc(c.Id);
-      doc.delete();
-      setState(() {
-        isUpdatingQuantity =
-            false; // Set the flag to false when the update is complete
-      });
-      return;
-    }
+
     final docProduct = FirebaseFirestore.instance
         .collection('users')
         .doc(curUserId)
@@ -132,6 +192,14 @@ class _CartPageState extends State<CartPage> {
 
     final json = product.toJson();
     await docProduct.update(json);
+    if (newQ == 0) {
+      final doc = FirebaseFirestore.instance
+          .collection('users')
+          .doc(curUserId)
+          .collection('cart')
+          .doc(c.Id);
+      doc.delete();
+    }
     setState(() {
       isUpdatingQuantity =
           false; // Set the flag to false when the update is complete
@@ -312,6 +380,7 @@ class _CartPageState extends State<CartPage> {
                     ),
                     onTap: () async {
                       await handleCheckout();
+                      totalPrice = 0;
                       setState(() {});
                     },
                   ),
@@ -319,7 +388,7 @@ class _CartPageState extends State<CartPage> {
               ),
             ),
           ),
-          if (isUpdatingQuantity)
+          if (isUpdatingQuantity || placingOrder)
             Positioned.fill(
               child: Container(
                 color: Colors.black.withOpacity(0.5),
