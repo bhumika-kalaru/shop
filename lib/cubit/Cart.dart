@@ -413,7 +413,6 @@ class _CartPageState extends State<CartPage> {
                     ),
                     onTap: () async {
                       await handleCheckout();
-                      totalPrice = 0;
                       setState(() {});
                     },
                   ),
