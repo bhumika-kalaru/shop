@@ -5,7 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shop/constants.dart';
-import 'package:shop/cubit/editProduct.dart';
+import 'package:shop/Screens/editProduct.dart';
 import 'package:shop/main.dart';
 import 'package:shop/models/cart_model.dart';
 import 'package:shop/models/product_model.dart';

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shop/Login/logIn.dart';
 import 'package:shop/constants.dart';
-import 'package:shop/cubit/product_page.dart';
+import 'package:shop/Screens/product_page.dart';
 
 Future main() async {
   WidgetsFlutterBinding.ensureInitialized();
