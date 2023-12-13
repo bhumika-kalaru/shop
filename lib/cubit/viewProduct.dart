@@ -45,8 +45,7 @@ class _ViewProductState extends State<ViewProduct> {
 
   Future<String> getUserRole() async {
     try {
-      if (curUserId != null) {
-        // Get the user's role from Firestore
+      if (curUserId!.isNotEmpty) {
         return curUserId!;
       } else {
         // User is not authenticated
@@ -226,6 +225,11 @@ class _ViewProductState extends State<ViewProduct> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        centerTitle: true,
+        title: Text(
+          "Product Details",
+          style: TextStyle(color: white),
+        ),
         backgroundColor: maincolour,
         leading: Container(
           margin: EdgeInsets.only(left: 4),
@@ -412,9 +416,6 @@ class _ViewProductState extends State<ViewProduct> {
                         color: maincolour),
                     child: IconButton(
                       onPressed: () async {
-                        setState(() {
-                          isAddingToCart = true;
-                        });
                         // setState(() async {
                         await updateProductWishlist(
                             pId: widget.currentProduct.Id,

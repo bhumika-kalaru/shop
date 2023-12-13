@@ -149,18 +149,39 @@ class _CartPageState extends State<CartPage> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.white,
-        title: Text("My Cart!"),
+        title: Text("My Cart"),
         centerTitle: true,
+        leading: Container(
+          margin: EdgeInsets.only(left: 4),
+          child: IconButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              icon: Icon(
+                Icons.arrow_back_ios,
+              )),
+        ),
       ),
       body: Stack(
         children: [
           Container(
+            margin: EdgeInsets.only(bottom: 0.11 * widget.h),
             color: Colors.white,
             child: StreamBuilder<List<CartProduct>>(
               stream: readProductsInCart(curUserId!),
               builder: ((context, snapshot) {
-                if (snapshot.hasError) {
-                  return Text('Something went wrong! ${snapshot.error}');
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return Center(
+                    child: CircularProgressIndicator(),
+                  );
+                } else if (snapshot.hasError) {
+                  return Center(
+                    child: Text('Error: ${snapshot.error}'),
+                  );
+                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return Center(
+                    child: Text('No products added to Cart'),
+                  );
                 } else if (snapshot.hasData) {
                   productsInCart = snapshot.data!;
                   print('$productsInCart');
@@ -361,7 +382,7 @@ class _CartPageState extends State<CartPage> {
                         overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.openSans(
                           color: Colors.black,
-                          fontWeight: FontWeight.w700,
+                          fontWeight: FontWeight.w600,
                           fontSize: 20,
                         ),
                       ),

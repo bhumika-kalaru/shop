@@ -119,50 +119,55 @@ class _ProductPageState extends State<ProductPage> {
       ),
       body: Stack(
         children: [
-          Center(
-              child: Container(
-                  color: Colors.white,
-                  child: StreamBuilder<List<Product>>(
-                    stream: readproducts(),
-                    builder: ((context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return Center(
-                          child: CircularProgressIndicator(),
-                        );
-                      } else if (snapshot.hasError) {
-                        return Center(
-                          child: Text('Error: ${snapshot.error}'),
-                        );
-                      } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                        return Center(
-                          child: Text('No products available.'),
-                        );
-                      } else {
-                        final products = snapshot.data!;
-                        print('$products');
+          Container(
+              color: Colors.white,
+              child: StreamBuilder<List<Product>>(
+                stream: readproducts(),
+                builder: ((context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return Center(
+                      child: CircularProgressIndicator(),
+                    );
+                  } else if (snapshot.hasError) {
+                    return Center(
+                      child: Text('Error: ${snapshot.error}'),
+                    );
+                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                    return Center(
+                      child: Text('No products available.'),
+                    );
+                  } else {
+                    final products = snapshot.data!;
+                    print('$products');
 
-                        return Center(
-                          child: ListView.builder(
-                            itemCount: (products.length / 2).ceil(),
-                            itemBuilder: (context, index) {
-                              final int firstIndex = index * 2;
-                              final int secondIndex = firstIndex + 1;
+                    return Center(
+                      child: ListView.builder(
+                        itemCount: (products.length / 2).ceil() *
+                            2, // Ensure even number of items
+                        itemBuilder: (context, index) {
+                          final int firstIndex = index * 2;
+                          final int secondIndex = firstIndex + 1;
 
-                              return Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  if (firstIndex < products.length)
-                                    buildProduct(products[firstIndex]),
-                                  if (secondIndex < products.length)
-                                    buildProduct(products[secondIndex]),
-                                ],
-                              );
-                            },
-                          ),
-                        );
-                      }
-                    }),
-                  )))
+                          return Wrap(
+                            // mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              if (firstIndex < products.length)
+                                buildProduct(products[firstIndex]),
+                              if (secondIndex < products.length)
+                                buildProduct(products[secondIndex]),
+                              if (secondIndex >= products.length)
+                                // Expanded(
+                                //   child:
+                                Container(),
+                              // ), // Add an empty container for odd number of products
+                            ],
+                          );
+                        },
+                      ),
+                    );
+                  }
+                }),
+              ))
         ],
       ),
       floatingActionButton: FutureBuilder<String>(
@@ -232,7 +237,7 @@ class _ProductPageState extends State<ProductPage> {
             boxShadow: blueShadow,
             borderRadius: BorderRadius.circular(10),
           ),
-          margin: EdgeInsets.all(widget.w / 50),
+          margin: EdgeInsets.all(widget.w / 30),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

@@ -32,7 +32,11 @@ class _WishlistPageState extends State<WishlistPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(),
+      appBar: AppBar(
+        backgroundColor: white,
+        title: Text("Wishlist"),
+        centerTitle: true,
+      ),
       body: Stack(
         children: [
           Container(
@@ -40,8 +44,18 @@ class _WishlistPageState extends State<WishlistPage> {
             child: StreamBuilder<List<WishlistProduct>>(
               stream: readProductsInWishlist(curUserId!),
               builder: ((context, snapshot) {
-                if (snapshot.hasError) {
-                  return Text('Something went wrong! ${snapshot.error}');
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return Center(
+                    child: CircularProgressIndicator(),
+                  );
+                } else if (snapshot.hasError) {
+                  return Center(
+                    child: Text('Error: ${snapshot.error}'),
+                  );
+                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return Center(
+                    child: Text('No products In Wishlist'),
+                  );
                 } else if (snapshot.hasData) {
                   final productsInCart = snapshot.data!;
                   print('$productsInCart');
@@ -94,8 +108,7 @@ class _WishlistPageState extends State<WishlistPage> {
 
   Widget buildWishlistProduct(Product product) => GestureDetector(
         child: Container(
-          width: 3 * widget.w / 7,
-          height: widget.h / 3,
+          height: 0.3 * widget.h,
           decoration: BoxDecoration(
             color: Colors.white,
             boxShadow: blueShadow,
@@ -132,11 +145,11 @@ class _WishlistPageState extends State<WishlistPage> {
                 child: Container(
                   padding: EdgeInsets.all(widget.w / 24),
                   child: Column(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
                             product.Name,
@@ -144,19 +157,24 @@ class _WishlistPageState extends State<WishlistPage> {
                             style: GoogleFonts.openSans(
                               color: Colors.black,
                               fontWeight: FontWeight.w700,
-                              fontSize: 13,
+                              fontSize: 20,
                             ),
                           ),
                         ],
                       ),
-                      Text(
-                        product.Price,
-                        overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.openSans(
-                          color: Colors.red,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            product.Price,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.openSans(
+                              color: Colors.red,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),

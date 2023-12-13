@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shop/Login/signIn.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -22,6 +23,18 @@ class _SignUpState extends State<SignUp> {
     emailController.dispose();
     passwordController.dispose();
     super.dispose();
+  }
+
+  Future<void> addUserIdToUsers() async {
+    try {
+      String curUserId = FirebaseAuth.instance.currentUser!.uid;
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(curUserId)
+          .set({'userId': curUserId});
+    } catch (e) {
+      print('Error adding user ID to users collection: $e');
+    }
   }
 
   @override
@@ -71,6 +84,7 @@ class _SignUpState extends State<SignUp> {
             onTap: () async {
               setState(() async {
                 signUp();
+                addUserIdToUsers();
                 Navigator.pushAndRemoveUntil(
                   context,
                   MaterialPageRoute(
@@ -112,7 +126,6 @@ class _SignUpState extends State<SignUp> {
             password: passwordController.text,
           )
           .catchError((error) => print(error));
-      ;
     } on FirebaseAuthException catch (e) {
       print(e);
     }
