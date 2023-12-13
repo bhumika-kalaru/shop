@@ -24,6 +24,7 @@ class CartPage extends StatefulWidget {
 }
 
 class _CartPageState extends State<CartPage> {
+  bool isUpdatingQuantity = false;
   int _currentIndex = 2;
   String? curUserId = FirebaseAuth.instance.currentUser?.uid;
   Icon heart = Icon(Icons.favorite);
@@ -98,6 +99,10 @@ class _CartPageState extends State<CartPage> {
     required CartProduct c,
     required int i,
   }) async {
+    setState(() {
+      isUpdatingQuantity =
+          true; // Set the flag to true when starting the update
+    });
     // Add your logic to update product wishlist status
     // Use productId to identify the product in the database
     int newQ = int.parse(c.Quantity) + i;
@@ -108,6 +113,10 @@ class _CartPageState extends State<CartPage> {
           .collection('cart')
           .doc(c.Id);
       doc.delete();
+      setState(() {
+        isUpdatingQuantity =
+            false; // Set the flag to false when the update is complete
+      });
       return;
     }
     final docProduct = FirebaseFirestore.instance
@@ -123,7 +132,10 @@ class _CartPageState extends State<CartPage> {
 
     final json = product.toJson();
     await docProduct.update(json);
-    setState(() {});
+    setState(() {
+      isUpdatingQuantity =
+          false; // Set the flag to false when the update is complete
+    });
   }
 
   @override
@@ -279,12 +291,22 @@ class _CartPageState extends State<CartPage> {
                     ),
                     onTap: () async {
                       await handleCheckout();
+                      setState(() {});
                     },
                   ),
                 ],
               ),
             ),
           ),
+          if (isUpdatingQuantity)
+            Positioned.fill(
+              child: Container(
+                color: Colors.black.withOpacity(0.5),
+                child: Center(
+                  child: CircularProgressIndicator(),
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -330,7 +352,7 @@ class _CartPageState extends State<CartPage> {
                 child: Container(
                   padding: EdgeInsets.all(widget.w / 24),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
                       // Product name
@@ -339,8 +361,8 @@ class _CartPageState extends State<CartPage> {
                         overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.openSans(
                           color: Colors.black,
-                          fontWeight: FontWeight.w500,
-                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 20,
                         ),
                       ),
                       // Product price
@@ -355,10 +377,24 @@ class _CartPageState extends State<CartPage> {
                       ),
                       // Product quantity control
                       Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          IconButton(
-                            icon: Icon(Icons.remove),
-                            onPressed: () async {
+                          GestureDetector(
+                            child: Container(
+                              height: 30,
+                              width: 35,
+                              margin: EdgeInsets.symmetric(horizontal: 4),
+                              decoration: BoxDecoration(
+                                color: Colors
+                                    .grey[300], // Set the background color
+                                borderRadius: BorderRadius.circular(
+                                    30.0), // Optional: add border radius
+                              ),
+                              child: Center(
+                                child: Icon(Icons.remove),
+                              ),
+                            ),
+                            onTap: () async {
                               // setState(() async {
                               await updateProductQuantity(
                                   c: cartProduct, i: -1);
@@ -366,13 +402,25 @@ class _CartPageState extends State<CartPage> {
                             },
                           ),
                           Text(
-                            cartProduct
-                                .Quantity, // Replace with actual quantity
-                            style: TextStyle(fontSize: 16),
+                            ' ' +
+                                cartProduct.Quantity +
+                                ' ', // Replace with actual quantity
+                            style: TextStyle(fontSize: 18),
                           ),
-                          IconButton(
-                            icon: Icon(Icons.add),
-                            onPressed: () async {
+                          GestureDetector(
+                            child: Container(
+                              height: 30,
+                              width: 35,
+                              margin: EdgeInsets.symmetric(horizontal: 4),
+                              decoration: BoxDecoration(
+                                color: Colors
+                                    .grey[300], // Set the background color
+                                borderRadius: BorderRadius.circular(
+                                    30), // Optional: add border radius
+                              ),
+                              child: Icon(Icons.add),
+                            ),
+                            onTap: () async {
                               await updateProductQuantity(c: cartProduct, i: 1);
                             },
                           ),

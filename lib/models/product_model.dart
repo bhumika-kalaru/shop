@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 class Product {
   late String Id;
   final String Price, Quantity;
-  late final String Name;
+  final String Name;
   final String Description;
   final String ImageUrl;
   final bool Wishlisted;

@@ -29,14 +29,21 @@ class _AddProductState extends State<AddProduct> {
   }
 
   Future<String> uploadFile(File file, String fileName) async {
+    print("ent up function");
     final ref = FirebaseStorage.instance.ref().child('images');
     Reference referenceImageToUpload = ref.child(fileName);
+    print("ref retrvd");
+    ;
 
     try {
+      print("try in up fun");
       await referenceImageToUpload.putFile(file);
+      print("putted file");
       final snapshot = await referenceImageToUpload.getDownloadURL();
+      print("url done");
       return snapshot;
     } catch (e) {
+      print("catchhhh");
       print("Error uploading file: $e");
       return '';
     }
@@ -62,7 +69,6 @@ class _AddProductState extends State<AddProduct> {
     );
     final json = product.toJson();
     await docProduct.set(json);
-    print("Product created");
   }
 
   final TextEditingController _nameController = TextEditingController();
@@ -105,7 +111,7 @@ class _AddProductState extends State<AddProduct> {
                 children: [
                   TextField(
                     controller: _nameController,
-                    maxLength: 15,
+                    maxLength: 12,
                     decoration: const InputDecoration(
                       labelText: 'Name',
                     ),
@@ -140,21 +146,27 @@ class _AddProductState extends State<AddProduct> {
                 alignment: Alignment.bottomCenter,
                 child: ElevatedButton(
                   onPressed: () async {
+                    print("142");
                     // Access the entered data
                     final String name = _nameController.text;
                     final String description = _descriptionController.text;
                     final String price = _priceController.text;
                     final String quantity = _quantityController.text;
                     try {
+                      print("try");
                       // final result = await FilePicker.platform.pickFiles();
                       // if (result != null) {
                       // final pickedFile = result.files.first;
                       final file = File(pickedFile!.path!);
                       final fileName = pickedFile!.name;
-
+                      print("bef upl");
                       // Upload image
                       final imageUrl = await uploadFile(file, fileName);
-
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                        content: Text("just uploaded file"),
+                        backgroundColor: Colors.red,
+                      ));
+                      print("bef creating");
                       if (imageUrl.isNotEmpty &&
                           price.isNotEmpty &&
                           name.isNotEmpty &&

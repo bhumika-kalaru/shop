@@ -79,17 +79,6 @@ class _ProductPageState extends State<ProductPage> {
               height: 20,
             ),
             ListTile(
-                leading: IconButton(
-              onPressed: () {
-                Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) =>
-                            CartPage(h: widget.h, w: widget.w)));
-              },
-              icon: Icon(Icons.shopping_cart, color: maincolour),
-            )),
-            ListTile(
               leading: Icon(
                 Icons.logout,
                 color: Colors.red,
@@ -281,7 +270,9 @@ class _ProductPageState extends State<ProductPage> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            product.Name,
+                            product.Name.length > 10
+                                ? '${product.Name.substring(0, 10)}'
+                                : product.Name,
                             overflow: TextOverflow.ellipsis,
                             style: GoogleFonts.openSans(
                               color: Colors.black,

@@ -24,6 +24,7 @@ class ViewProduct extends StatefulWidget {
 class _ViewProductState extends State<ViewProduct> {
   String? curUserId = FirebaseAuth.instance.currentUser?.uid;
   Icon heart = Icon(Icons.favorite);
+  bool isAddingToCart = false;
 
   Future<bool> doesProductExistInCart(String productId) async {
     try {
@@ -44,35 +45,25 @@ class _ViewProductState extends State<ViewProduct> {
 
   Future<String> getUserRole() async {
     try {
-      User? user = FirebaseAuth.instance.currentUser;
-      if (user != null) {
+      if (curUserId != null) {
         // Get the user's role from Firestore
-        DocumentSnapshot<Map<String, dynamic>> snapshot =
-            await FirebaseFirestore.instance
-                .collection('users')
-                .doc(user.uid)
-                .get();
-
-        if (snapshot.exists) {
-          // Return the user's role
-          return curUserId!; // Provide a default role
-        } else {
-          // User document not found
-          throw Exception("User document not found");
-        }
+        return curUserId!;
       } else {
         // User is not authenticated
         throw Exception("User is not authenticated");
       }
     } catch (e) {
-      print("Error getting user role: $e");
-      throw Exception("Error getting user role");
+      // print("Error getting user role: $e");
+      throw Exception("");
     }
   }
 
   Future<void> createCartProduct({
     required String pId,
   }) async {
+    setState(() {
+      isAddingToCart = true;
+    });
     print("Creating product");
     final docProduct = FirebaseFirestore.instance
         .collection('users')
@@ -100,7 +91,11 @@ class _ViewProductState extends State<ViewProduct> {
           ],
         );
       },
-    );
+    ).then((_) {
+      setState(() {
+        isAddingToCart = false;
+      });
+    });
   }
 
   Future<bool> doesProductExistInWishList(String productId) async {
@@ -153,6 +148,9 @@ class _ViewProductState extends State<ViewProduct> {
     required CartProduct c,
     required int i,
   }) async {
+    setState(() {
+      isAddingToCart = true;
+    });
     // Add your logic to update product cart status
     // Use productId to identify the product in the database
     int newQ = int.parse(c.Quantity) + i;
@@ -195,7 +193,11 @@ class _ViewProductState extends State<ViewProduct> {
           ],
         );
       },
-    );
+    ).then((_) {
+      setState(() {
+        isAddingToCart = false;
+      });
+    });
   }
 
   Future<CartProduct?> getCartProduct(String productId) async {
@@ -410,6 +412,9 @@ class _ViewProductState extends State<ViewProduct> {
                         color: maincolour),
                     child: IconButton(
                       onPressed: () async {
+                        setState(() {
+                          isAddingToCart = true;
+                        });
                         // setState(() async {
                         await updateProductWishlist(
                             pId: widget.currentProduct.Id,
@@ -487,6 +492,15 @@ class _ViewProductState extends State<ViewProduct> {
           //     ),
           //   ),
           // ),
+          if (isAddingToCart)
+            Positioned.fill(
+              child: Container(
+                color: Colors.black.withOpacity(0.5),
+                child: Center(
+                  child: CircularProgressIndicator(),
+                ),
+              ),
+            ),
         ],
       ),
     );
