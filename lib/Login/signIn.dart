@@ -54,6 +54,7 @@ class _SignInState extends State<SignIn> {
           Container(
             margin: EdgeInsets.symmetric(horizontal: w / 10, vertical: h / 40),
             child: TextFormField(
+              // obscureText: true,
               controller: passwordController,
               decoration: InputDecoration(hintText: "Password"),
             ),

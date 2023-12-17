@@ -81,7 +81,6 @@ class _EditProductState extends State<EditProduct> {
     _priceController.text = widget.currentProduct.Price;
     _descriptionController.text = widget.currentProduct.Description;
     newImageUrl = widget.currentProduct.ImageUrl;
-    // You can add similar lines for other fields if needed
   }
 
   @override
@@ -186,7 +185,6 @@ class _EditProductState extends State<EditProduct> {
                     final String name = _nameController.text;
                     final String description = _descriptionController.text;
                     final String price = _priceController.text;
-
                     try {
                       if (pickedFile != null) {
                         final file = File(pickedFile!.path!);

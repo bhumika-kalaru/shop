@@ -24,7 +24,7 @@ class CartPage extends StatefulWidget {
 }
 
 class _CartPageState extends State<CartPage> {
-  double totalPrice = 0;
+  double totalPrice = 0, totalPriceUsingId = 0;
   bool isUpdatingQuantity = false;
   bool placingOrder = false;
   int _currentIndex = 2;
@@ -60,7 +60,6 @@ class _CartPageState extends State<CartPage> {
             productSnapshot.data() as Map<String, dynamic>,
           );
 
-          // Assuming the price is stored as a String, you may need to adjust this
           totalPrice +=
               double.parse(product.Price) * int.parse(cartProduct.Quantity);
         }
@@ -71,9 +70,8 @@ class _CartPageState extends State<CartPage> {
   }
 
   Future<double> calculateTotalPriceUsingUserId(String userId) async {
-    double totalPriceUsingId = 0;
+    totalPriceUsingId = 0;
 
-    // Retrieve cart products for the given user
     QuerySnapshot cartSnapshot = await FirebaseFirestore.instance
         .collection('users')
         .doc(userId)
@@ -87,7 +85,7 @@ class _CartPageState extends State<CartPage> {
       if (cartDoc.exists) {
         final productSnapshot = await FirebaseFirestore.instance
             .collection('products')
-            .doc(cartDoc.id) // Replace with the actual field name
+            .doc(cartDoc.id)
             .get();
 
         if (productSnapshot.exists) {
@@ -95,10 +93,8 @@ class _CartPageState extends State<CartPage> {
             productSnapshot.data() as Map<String, dynamic>,
           );
 
-          // Assuming the price is stored as a String, you may need to adjust this
-          totalPriceUsingId += double.parse(product.Price) *
-              int.parse(
-                  cartDoc['quantity']); // Replace with the actual field name
+          totalPriceUsingId +=
+              double.parse(product.Price) * int.parse(cartDoc['quantity']);
         }
       }
     }
@@ -161,11 +157,17 @@ class _CartPageState extends State<CartPage> {
       // Calculate the total price of the order
       double total = await calculateTotalPriceUsingUserId(curUserId!);
       for (QueryDocumentSnapshot cartDoc in cartSnapshot.docs) {
-        final cartProduct =
-            CartProduct.fromJson(cartDoc.data() as Map<String, dynamic>);
-        await updateProductQuantity(
-            c: cartProduct, i: -int.parse(cartProduct.Quantity));
+        if (cartDoc.exists) {
+          // Delete the entire document in the 'cart' collection
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(userId)
+              .collection('cart')
+              .doc(cartDoc.id)
+              .delete();
+        }
       }
+
       print("paih");
 
       // Show order placed successfully message with total price
@@ -231,16 +233,16 @@ class _CartPageState extends State<CartPage> {
       Quantity: newQ.toString(),
     );
 
+    if (newQ == 0) {
+      docProduct.delete();
+      setState(() {
+        isUpdatingQuantity =
+            false; // Set the flag to false when the update is complete
+      });
+      return;
+    }
     final json = product.toJson();
     await docProduct.update(json);
-    if (newQ == 0) {
-      final doc = FirebaseFirestore.instance
-          .collection('users')
-          .doc(curUserId)
-          .collection('cart')
-          .doc(c.Id);
-      doc.delete();
-    }
     setState(() {
       isUpdatingQuantity =
           false; // Set the flag to false when the update is complete
@@ -338,6 +340,7 @@ class _CartPageState extends State<CartPage> {
           Positioned(
             bottom: 0,
             right: 0,
+            left: 0,
             child: Container(
               decoration: BoxDecoration(
                   // color: white,
@@ -351,6 +354,41 @@ class _CartPageState extends State<CartPage> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
+                  FutureBuilder<double>(
+                    future: calculateTotalPriceUsingUserId(curUserId!),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return CircularProgressIndicator(
+                          color: white,
+                        );
+                      } else if (snapshot.hasData) {
+                        final totalPriceUsingId = snapshot.data!;
+                        return Column(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '  Total: ',
+                              style: TextStyle(
+                                  color: maincolour,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w500),
+                            ),
+                            Text(
+                              ' \₹ ${totalPriceUsingId.toStringAsFixed(2)}',
+                              style: TextStyle(
+                                color: maincolour,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 24,
+                              ),
+                            ),
+                          ],
+                        );
+                      } else {
+                        return Text('');
+                      }
+                    },
+                  ),
                   GestureDetector(
                     child: Container(
                       margin: EdgeInsets.all(12),
@@ -496,9 +534,7 @@ class _CartPageState extends State<CartPage> {
                             },
                           ),
                           Text(
-                            ' ' +
-                                cartProduct.Quantity +
-                                ' ', // Replace with actual quantity
+                            ' ' + cartProduct.Quantity + ' ',
                             style: TextStyle(fontSize: 18),
                           ),
                           GestureDetector(
@@ -507,10 +543,8 @@ class _CartPageState extends State<CartPage> {
                               width: 35,
                               margin: EdgeInsets.symmetric(horizontal: 4),
                               decoration: BoxDecoration(
-                                color: Colors
-                                    .grey[300], // Set the background color
-                                borderRadius: BorderRadius.circular(
-                                    30), // Optional: add border radius
+                                color: Colors.grey[300],
+                                borderRadius: BorderRadius.circular(30),
                               ),
                               child: Icon(Icons.add),
                             ),
